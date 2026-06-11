@@ -7,12 +7,20 @@ export default function PublicForm() {
   const [formData, setFormData] = useState(null);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [bgStyle, setBgStyle] = useState({});
   const formRef = useRef(null);
   const formInstanceRef = useRef(null);
 
   useEffect(() => {
     axios.get(`http://localhost:4000/api/forms/${identifier}`)
-      .then(({ data }) => setFormData(data))
+      .then(({ data }) => {
+        setFormData(data);
+        if (data.bgImageUrl) {
+          setBgStyle({ backgroundImage: `url(${data.bgImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' });
+        } else if (data.bgColor) {
+          setBgStyle({ background: data.bgColor });
+        }
+      })
       .catch(() => setError('Form not found.'));
   }, [identifier]);
 
@@ -59,7 +67,7 @@ export default function PublicForm() {
   }
 
   return (
-    <div style={styles.page}>
+    <div style={{ ...styles.page, ...bgStyle }}>
       <div style={styles.card}>
         {formData.logoUrl && (
           <img src={formData.logoUrl} alt="logo" style={styles.logo} />

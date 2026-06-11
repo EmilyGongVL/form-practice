@@ -20,7 +20,9 @@ model Form {
   identifier String   @unique
   title      String
   schema     Json
-  logoPath   String?
+  logoPath        String?
+  bgColor         String?
+  bgImagePath     String?
   userId     Int
   user       User     @relation(fields: [userId], references: [id])
   leads      Lead[]

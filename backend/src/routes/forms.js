@@ -16,6 +16,16 @@ const storage = multer.diskStorage({
   },
 });
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
+const uploadFields = upload.fields([
+  { name: 'logo', maxCount: 1 },
+  { name: 'bgImage', maxCount: 1 },
+]);
+
+function toUrl(req, filePath) {
+  return filePath
+    ? `${req.protocol}://${req.get('host')}/uploads/${path.basename(filePath)}`
+    : null;
+}
 
 // List forms for authenticated user
 router.get('/', requireAuth, async (req, res) => {
@@ -31,20 +41,22 @@ router.get('/', requireAuth, async (req, res) => {
 router.get('/:identifier', async (req, res) => {
   const form = await prisma.form.findUnique({
     where: { identifier: req.params.identifier },
-    select: { title: true, schema: true, logoPath: true },
+    select: { title: true, schema: true, logoPath: true, bgColor: true, bgImagePath: true },
   });
   if (!form) return res.status(404).json({ error: 'Form not found' });
 
-  const logoUrl = form.logoPath
-    ? `${req.protocol}://${req.get('host')}/uploads/${path.basename(form.logoPath)}`
-    : null;
-
-  res.json({ title: form.title, schema: form.schema, logoUrl });
+  res.json({
+    title: form.title,
+    schema: form.schema,
+    logoUrl: toUrl(req, form.logoPath),
+    bgColor: form.bgColor || null,
+    bgImageUrl: toUrl(req, form.bgImagePath),
+  });
 });
 
 // Create form
-router.post('/', requireAuth, upload.single('logo'), async (req, res) => {
-  const { title, schema } = req.body;
+router.post('/', requireAuth, uploadFields, async (req, res) => {
+  const { title, schema, bgColor } = req.body;
   if (!title || !schema) {
     return res.status(400).json({ error: 'Title and schema required' });
   }
@@ -56,28 +68,29 @@ router.post('/', requireAuth, upload.single('logo'), async (req, res) => {
     return res.status(400).json({ error: 'Invalid schema JSON' });
   }
 
-  // Two-step insert: create without identifier, then update with generated one
+  const logoFile = req.files?.logo?.[0];
+  const bgImageFile = req.files?.bgImage?.[0];
+
   const form = await prisma.form.create({
     data: {
       identifier: `temp-${Date.now()}`,
       title,
       schema: parsedSchema,
-      logoPath: req.file ? req.file.path : null,
+      logoPath: logoFile ? logoFile.path : null,
+      bgColor: bgColor || null,
+      bgImagePath: bgImageFile ? bgImageFile.path : null,
       userId: req.user.id,
     },
   });
 
   const identifier = generateIdentifier(form.id, req.user.id);
-  const updated = await prisma.form.update({
-    where: { id: form.id },
-    data: { identifier },
-  });
+  const updated = await prisma.form.update({ where: { id: form.id }, data: { identifier } });
 
   res.status(201).json(updated);
 });
 
 // Update form
-router.patch('/:identifier', requireAuth, upload.single('logo'), async (req, res) => {
+router.patch('/:identifier', requireAuth, uploadFields, async (req, res) => {
   const form = await prisma.form.findUnique({ where: { identifier: req.params.identifier } });
   if (!form) return res.status(404).json({ error: 'Form not found' });
   if (form.userId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
@@ -91,7 +104,12 @@ router.patch('/:identifier', requireAuth, upload.single('logo'), async (req, res
       return res.status(400).json({ error: 'Invalid schema JSON' });
     }
   }
-  if (req.file) data.logoPath = req.file.path;
+  if ('bgColor' in req.body) data.bgColor = req.body.bgColor || null;
+
+  const logoFile = req.files?.logo?.[0];
+  const bgImageFile = req.files?.bgImage?.[0];
+  if (logoFile) data.logoPath = logoFile.path;
+  if (bgImageFile) data.bgImagePath = bgImageFile.path;
 
   const updated = await prisma.form.update({ where: { id: form.id }, data });
   res.json(updated);
