@@ -36,6 +36,9 @@ export default function BuilderPage() {
 
     return () => {
       if (builderInstanceRef.current) {
+        if (builderInstanceRef.current._helpInterceptor) {
+          document.removeEventListener('click', builderInstanceRef.current._helpInterceptor, true);
+        }
         builderInstanceRef.current.destroy();
         builderInstanceRef.current = null;
       }
@@ -119,11 +122,20 @@ export default function BuilderPage() {
       },
     };
 
-    window.Formio.builder(builderRef.current, schema, options).then(
-      (builder) => {
-        builderInstanceRef.current = builder;
-      },
-    );
+    window.Formio.builder(builderRef.current, schema, options).then((builder) => {
+      builderInstanceRef.current = builder;
+
+      const interceptHelp = (e) => {
+        const link = e.target.closest('a[href*="help.form.io"], a[href*="form.io/developers"]');
+        if (link) {
+          e.preventDefault();
+          e.stopPropagation();
+          window.open('/help', '_blank');
+        }
+      };
+      document.addEventListener('click', interceptHelp, true);
+      builder._helpInterceptor = interceptHelp;
+    });
   }
 
   function handleLogoChange(e) {
