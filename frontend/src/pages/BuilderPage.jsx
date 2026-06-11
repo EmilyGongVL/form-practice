@@ -46,9 +46,18 @@ export default function BuilderPage() {
     if (!builderRef.current) return;
     //customize form builder options to hide irrelevant tabs.
     const hiddenTabs = { ignore: true };
+    const hiddenDisplayFields = {
+      key: 'display',
+      components: [
+        { key: 'prefix', ignore: true },
+        { key: 'suffix', ignore: true },
+        { key: 'widget', ignore: true },
+      ],
+    };
     const options = {
       editForm: {
         textfield: [
+          hiddenDisplayFields,
           { key: "data", ...hiddenTabs },
           { key: "api", ...hiddenTabs },
           { key: "conditional", ...hiddenTabs },
@@ -63,6 +72,7 @@ export default function BuilderPage() {
           { key: "layout", ...hiddenTabs },
         ],
         email: [
+          hiddenDisplayFields,
           { key: "data", ...hiddenTabs },
           { key: "api", ...hiddenTabs },
           { key: "conditional", ...hiddenTabs },
@@ -70,6 +80,7 @@ export default function BuilderPage() {
           { key: "layout", ...hiddenTabs },
         ],
         phoneNumber: [
+          hiddenDisplayFields,
           { key: "data", ...hiddenTabs },
           { key: "api", ...hiddenTabs },
           { key: "conditional", ...hiddenTabs },
@@ -77,6 +88,7 @@ export default function BuilderPage() {
           { key: "layout", ...hiddenTabs },
         ],
         number: [
+          hiddenDisplayFields,
           { key: "data", ...hiddenTabs },
           { key: "api", ...hiddenTabs },
           { key: "conditional", ...hiddenTabs },
