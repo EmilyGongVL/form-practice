@@ -14,6 +14,11 @@ export default function BuilderPage() {
   const [bgColor, setBgColor] = useState("#ffffff");
   const [bgImageFile, setBgImageFile] = useState(null);
   const [bgImagePreview, setBgImagePreview] = useState(null);
+  const [borderColor,  setBorderColor]  = useState('#000000');
+  const [borderWidth,  setBorderWidth]  = useState(0);
+  const [borderStyle,  setBorderStyle]  = useState('solid');
+  const [borderRadius, setBorderRadius] = useState(8);
+  const [cardShadow,   setCardShadow]   = useState('md');
   const [savedIdentifier, setSavedIdentifier] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -29,6 +34,11 @@ export default function BuilderPage() {
         if (data.logoUrl) setLogoPreview(data.logoUrl);
         if (data.bgColor) setBgColor(data.bgColor);
         if (data.bgImageUrl) setBgImagePreview(data.bgImageUrl);
+        if (data.borderColor  != null) setBorderColor(data.borderColor);
+        if (data.borderWidth  != null) setBorderWidth(data.borderWidth);
+        if (data.borderStyle  != null) setBorderStyle(data.borderStyle);
+        if (data.borderRadius != null) setBorderRadius(data.borderRadius);
+        if (data.cardShadow   != null) setCardShadow(data.cardShadow);
         initialSchemaRef.current = data.schema;
         mountBuilder(data.schema);
       });
@@ -175,6 +185,11 @@ export default function BuilderPage() {
     formData.append("bgColor", bgColor);
     if (logoFile) formData.append("logo", logoFile);
     if (bgImageFile) formData.append("bgImage", bgImageFile);
+    formData.append("borderColor",  borderColor);
+    formData.append("borderWidth",  borderWidth);
+    formData.append("borderStyle",  borderStyle);
+    formData.append("borderRadius", borderRadius);
+    formData.append("cardShadow",   cardShadow);
 
     try {
       if (isNew) {
@@ -254,7 +269,7 @@ export default function BuilderPage() {
         </div>
 
         <div style={styles.field}>
-          <label style={styles.label}>Background Colour</label>
+          <label style={styles.label}>Card Background Colour</label>
           <div style={styles.colorRow}>
             <input
               type="color"
@@ -268,7 +283,7 @@ export default function BuilderPage() {
 
         <div style={styles.field}>
           <label style={styles.label}>
-            Background Image <span style={styles.hint}>(overrides colour)</span>
+            Card Background Image <span style={styles.hint}>(overrides colour)</span>
           </label>
           <input type="file" accept="image/*" onChange={handleBgImageChange} />
           {bgImagePreview && (
@@ -279,6 +294,57 @@ export default function BuilderPage() {
               </button>
             </div>
           )}
+        </div>
+
+        <div style={styles.field}>
+          <label style={styles.label}>Card Border &amp; Shadow</label>
+          <div style={styles.borderGrid}>
+            <div style={styles.borderField}>
+              <span style={styles.subLabel}>Width (px)</span>
+              <input
+                type="number" min="0" max="10"
+                style={{ ...styles.input, minWidth: '70px' }}
+                value={borderWidth}
+                onChange={e => setBorderWidth(Number(e.target.value))}
+              />
+            </div>
+            <div style={styles.borderField}>
+              <span style={styles.subLabel}>Style</span>
+              <select style={{ ...styles.input, minWidth: '90px' }} value={borderStyle} onChange={e => setBorderStyle(e.target.value)}>
+                {['solid', 'dashed', 'dotted'].map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div style={styles.borderField}>
+              <span style={styles.subLabel}>Colour</span>
+              <input type="color" value={borderColor} onChange={e => setBorderColor(e.target.value)} style={styles.colorPicker} />
+            </div>
+            <div style={styles.borderField}>
+              <span style={styles.subLabel}>Radius (px)</span>
+              <input
+                type="number" min="0" max="50"
+                style={{ ...styles.input, minWidth: '70px' }}
+                value={borderRadius}
+                onChange={e => setBorderRadius(Number(e.target.value))}
+              />
+            </div>
+            <div style={styles.borderField}>
+              <span style={styles.subLabel}>Shadow</span>
+              <select style={{ ...styles.input, minWidth: '100px' }} value={cardShadow} onChange={e => setCardShadow(e.target.value)}>
+                <option value="none">None</option>
+                <option value="sm">Light</option>
+                <option value="md">Medium</option>
+                <option value="lg">Strong</option>
+              </select>
+            </div>
+          </div>
+          <div style={{
+            marginTop: '0.5rem',
+            width: '80px', height: '50px',
+            borderRadius: `${borderRadius}px`,
+            border: borderWidth > 0 ? `${borderWidth}px ${borderStyle} ${borderColor}` : '1px solid #e5e7eb',
+            background: '#fff',
+            boxShadow: { none: 'none', sm: '0 1px 4px rgba(0,0,0,0.06)', md: '0 2px 12px rgba(0,0,0,0.08)', lg: '0 4px 24px rgba(0,0,0,0.18)' }[cardShadow] ?? 'none',
+          }} />
         </div>
       </div>
 
@@ -411,4 +477,7 @@ const styles = {
     borderRadius: "8px",
     padding: "1rem",
   },
+  borderGrid: { display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' },
+  borderField: { display: 'flex', flexDirection: 'column', gap: '0.25rem' },
+  subLabel: { fontSize: '0.75rem', color: '#6b7280', fontWeight: 500 },
 };

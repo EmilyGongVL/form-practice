@@ -24,6 +24,11 @@ model Form {
   bgColor         String?
   bgImagePath     String?
   formType        String   @default("Lead Form")
+  borderColor     String?
+  borderWidth     Int?     @default(0)
+  borderStyle     String?  @default("solid")
+  borderRadius    Int?     @default(8)
+  cardShadow      String?  @default("md")
   userId     Int
   user       User     @relation(fields: [userId], references: [id])
   leads      Lead[]

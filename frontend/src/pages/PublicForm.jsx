@@ -2,25 +2,24 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 
+const SHADOWS = {
+  none: 'none',
+  sm:   '0 1px 4px rgba(0,0,0,0.06)',
+  md:   '0 2px 12px rgba(0,0,0,0.08)',
+  lg:   '0 4px 24px rgba(0,0,0,0.18)',
+};
+
 export default function PublicForm() {
   const { identifier } = useParams();
   const [formData, setFormData] = useState(null);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
-  const [bgStyle, setBgStyle] = useState({});
   const formRef = useRef(null);
   const formInstanceRef = useRef(null);
 
   useEffect(() => {
     axios.get(`http://localhost:4000/api/forms/${identifier}`)
-      .then(({ data }) => {
-        setFormData(data);
-        if (data.bgImageUrl) {
-          setBgStyle({ backgroundImage: `url(${data.bgImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' });
-        } else if (data.bgColor) {
-          setBgStyle({ background: data.bgColor });
-        }
-      })
+      .then(({ data }) => setFormData(data))
       .catch(() => setError('Form not found.'));
   }, [identifier]);
 
@@ -66,9 +65,22 @@ export default function PublicForm() {
     );
   }
 
+  const cardStyle = {
+    borderRadius: `${formData.borderRadius ?? 8}px`,
+    boxShadow: SHADOWS[formData.cardShadow] ?? SHADOWS.md,
+    ...(formData.borderWidth > 0 ? {
+      border: `${formData.borderWidth}px ${formData.borderStyle || 'solid'} ${formData.borderColor || '#000'}`,
+    } : {}),
+    ...(formData.bgImageUrl ? {
+      backgroundImage: `url(${formData.bgImageUrl})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+    } : formData.bgColor ? { background: formData.bgColor } : {}),
+  };
+
   return (
-    <div style={{ ...styles.page, ...bgStyle }}>
-      <div style={styles.card}>
+    <div style={styles.page}>
+      <div style={{ ...styles.card, ...cardStyle }}>
         {formData.logoUrl && (
           <img src={formData.logoUrl} alt="logo" style={styles.logo} />
         )}
@@ -80,8 +92,8 @@ export default function PublicForm() {
 }
 
 const styles = {
-  page: { minHeight: '100vh', background: '#f5f5f5', display: 'flex', justifyContent: 'center', padding: '3rem 1rem' },
-  card: { background: '#fff', borderRadius: '8px', padding: '2rem', width: '100%', maxWidth: '640px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' },
+  page: { minHeight: '100vh', display: 'flex', justifyContent: 'center', padding: '3rem 1rem' },
+  card: { borderRadius: '8px', padding: '2rem', width: '100%', maxWidth: '640px' },
   logo: { width: '80px', height: '80px', objectFit: 'contain', marginBottom: '1rem', borderRadius: '4px' },
   title: { fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem' },
   center: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' },

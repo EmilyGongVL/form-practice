@@ -49,7 +49,11 @@ router.get('/', requireAuth, async (req, res) => {
 router.get('/:identifier', async (req, res) => {
   const form = await prisma.form.findUnique({
     where: { identifier: req.params.identifier },
-    select: { title: true, schema: true, logoPath: true, bgColor: true, bgImagePath: true },
+    select: {
+      title: true, schema: true, logoPath: true, bgColor: true, bgImagePath: true,
+      borderColor: true, borderWidth: true, borderStyle: true, borderRadius: true, cardShadow: true,
+      formType: true,
+    },
   });
   if (!form) return res.status(404).json({ error: 'Form not found' });
 
@@ -59,6 +63,11 @@ router.get('/:identifier', async (req, res) => {
     logoUrl: toUrl(req, form.logoPath),
     bgColor: form.bgColor || null,
     bgImageUrl: toUrl(req, form.bgImagePath),
+    borderColor: form.borderColor || null,
+    borderWidth: form.borderWidth ?? 0,
+    borderStyle: form.borderStyle || 'solid',
+    borderRadius: form.borderRadius ?? 8,
+    cardShadow: form.cardShadow || 'md',
   });
 });
 
@@ -77,7 +86,7 @@ router.get('/:identifier/submissions', requireAuth, async (req, res) => {
 
 // Create form
 router.post('/', requireAuth, uploadFields, async (req, res) => {
-  const { title, schema, bgColor, formType } = req.body;
+  const { title, schema, bgColor, formType, borderColor, borderWidth, borderStyle, borderRadius, cardShadow } = req.body;
   if (!title || !schema) {
     return res.status(400).json({ error: 'Title and schema required' });
   }
@@ -101,6 +110,11 @@ router.post('/', requireAuth, uploadFields, async (req, res) => {
       logoPath: logoFile ? logoFile.path : null,
       bgColor: bgColor || null,
       bgImagePath: bgImageFile ? bgImageFile.path : null,
+      borderColor: borderColor || null,
+      borderWidth: borderWidth ? parseInt(borderWidth) : 0,
+      borderStyle: borderStyle || 'solid',
+      borderRadius: borderRadius ? parseInt(borderRadius) : 8,
+      cardShadow: cardShadow || 'md',
       userId: req.user.id,
     },
   });
@@ -150,7 +164,12 @@ router.patch('/:identifier', requireAuth, uploadFields, async (req, res) => {
       return res.status(400).json({ error: 'Invalid schema JSON' });
     }
   }
-  if ('bgColor' in req.body) data.bgColor = req.body.bgColor || null;
+  if ('bgColor'      in req.body) data.bgColor      = req.body.bgColor      || null;
+  if ('borderColor'  in req.body) data.borderColor  = req.body.borderColor  || null;
+  if ('borderWidth'  in req.body) data.borderWidth  = req.body.borderWidth  ? parseInt(req.body.borderWidth)  : 0;
+  if ('borderStyle'  in req.body) data.borderStyle  = req.body.borderStyle  || 'solid';
+  if ('borderRadius' in req.body) data.borderRadius = req.body.borderRadius ? parseInt(req.body.borderRadius) : 8;
+  if ('cardShadow'   in req.body) data.cardShadow   = req.body.cardShadow   || 'md';
 
   const logoFile = req.files?.logo?.[0];
   const bgImageFile = req.files?.bgImage?.[0];
