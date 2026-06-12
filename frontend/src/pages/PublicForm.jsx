@@ -9,6 +9,8 @@ const SHADOWS = {
   lg:   '0 4px 24px rgba(0,0,0,0.18)',
 };
 
+const inIframe = window.self !== window.top;
+
 export default function PublicForm() {
   const { identifier } = useParams();
   const [formData, setFormData] = useState(null);
@@ -16,6 +18,14 @@ export default function PublicForm() {
   const [error, setError] = useState('');
   const formRef = useRef(null);
   const formInstanceRef = useRef(null);
+
+  useEffect(() => {
+    if (inIframe) {
+      const prev = document.body.style.background;
+      document.body.style.background = 'transparent';
+      return () => { document.body.style.background = prev; };
+    }
+  }, []);
 
   useEffect(() => {
     axios.get(`http://localhost:4000/api/forms/${identifier}`)
@@ -79,7 +89,7 @@ export default function PublicForm() {
   };
 
   return (
-    <div style={styles.page}>
+    <div style={{ ...styles.page, ...(inIframe ? { background: 'transparent' } : {}) }}>
       <div style={{ ...styles.card, ...cardStyle }}>
         {formData.logoUrl && (
           <img src={formData.logoUrl} alt="logo" style={styles.logo} />
