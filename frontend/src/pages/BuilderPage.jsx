@@ -11,6 +11,7 @@ export default function BuilderPage() {
   const [formType, setFormType] = useState("Lead Form");
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
+  const [bgTransparent, setBgTransparent] = useState(false);
   const [bgColor, setBgColor] = useState("#ffffff");
   const [bgImageFile, setBgImageFile] = useState(null);
   const [bgImagePreview, setBgImagePreview] = useState(null);
@@ -32,7 +33,11 @@ export default function BuilderPage() {
         setTitle(data.title);
         if (data.formType) setFormType(data.formType);
         if (data.logoUrl) setLogoPreview(data.logoUrl);
-        if (data.bgColor) setBgColor(data.bgColor);
+        if (data.bgColor) {
+          setBgColor(data.bgColor);
+        } else if (!data.bgImageUrl) {
+          setBgTransparent(true);
+        }
         if (data.bgImageUrl) setBgImagePreview(data.bgImageUrl);
         if (data.borderColor  != null) setBorderColor(data.borderColor);
         if (data.borderWidth  != null) setBorderWidth(data.borderWidth);
@@ -182,9 +187,14 @@ export default function BuilderPage() {
     formData.append("title", title);
     formData.append("formType", formType);
     formData.append("schema", JSON.stringify(schema));
-    formData.append("bgColor", bgColor);
+    if (bgTransparent) {
+      formData.append("bgColor", "");
+      formData.append("removeBgImage", "true");
+    } else {
+      formData.append("bgColor", bgColor);
+      if (bgImageFile) formData.append("bgImage", bgImageFile);
+    }
     if (logoFile) formData.append("logo", logoFile);
-    if (bgImageFile) formData.append("bgImage", bgImageFile);
     formData.append("borderColor",  borderColor);
     formData.append("borderWidth",  borderWidth);
     formData.append("borderStyle",  borderStyle);
@@ -269,30 +279,40 @@ export default function BuilderPage() {
         </div>
 
         <div style={styles.field}>
-          <label style={styles.label}>Card Background Colour</label>
-          <div style={styles.colorRow}>
+          <label style={styles.label}>Card Background</label>
+          <label style={styles.checkRow}>
             <input
-              type="color"
-              value={bgColor}
-              onChange={(e) => setBgColor(e.target.value)}
-              style={styles.colorPicker}
+              type="checkbox"
+              checked={bgTransparent}
+              onChange={e => {
+                setBgTransparent(e.target.checked);
+                if (e.target.checked) { setBgImageFile(null); setBgImagePreview(null); }
+              }}
             />
-            <span style={styles.colorHex}>{bgColor}</span>
-          </div>
-        </div>
-
-        <div style={styles.field}>
-          <label style={styles.label}>
-            Card Background Image <span style={styles.hint}>(overrides colour)</span>
+            <span style={{ fontSize: '0.875rem' }}>Transparent</span>
           </label>
-          <input type="file" accept="image/*" onChange={handleBgImageChange} />
-          {bgImagePreview && (
-            <div style={styles.bgPreviewWrap}>
-              <div style={{ ...styles.bgPreview, ...bgPreviewStyle }} />
-              <button style={styles.clearBtn} onClick={clearBgImage}>
-                ✕ Remove
-              </button>
-            </div>
+          {!bgTransparent && (
+            <>
+              <div style={styles.colorRow}>
+                <input
+                  type="color"
+                  value={bgColor}
+                  onChange={(e) => setBgColor(e.target.value)}
+                  style={styles.colorPicker}
+                />
+                <span style={styles.colorHex}>{bgColor}</span>
+              </div>
+              <span style={{ ...styles.hint, marginTop: '0.25rem' }}>or upload an image (overrides colour)</span>
+              <input type="file" accept="image/*" onChange={handleBgImageChange} />
+              {bgImagePreview && (
+                <div style={styles.bgPreviewWrap}>
+                  <div style={{ ...styles.bgPreview, ...bgPreviewStyle }} />
+                  <button style={styles.clearBtn} onClick={clearBgImage}>
+                    ✕ Remove
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -477,6 +497,7 @@ const styles = {
     borderRadius: "8px",
     padding: "1rem",
   },
+  checkRow: { display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' },
   borderGrid: { display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' },
   borderField: { display: 'flex', flexDirection: 'column', gap: '0.25rem' },
   subLabel: { fontSize: '0.75rem', color: '#6b7280', fontWeight: 500 },

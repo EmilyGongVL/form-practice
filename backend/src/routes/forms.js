@@ -165,6 +165,7 @@ router.patch('/:identifier', requireAuth, uploadFields, async (req, res) => {
     }
   }
   if ('bgColor'      in req.body) data.bgColor      = req.body.bgColor      || null;
+  if (req.body.removeBgImage === 'true') data.bgImagePath = null;
   if ('borderColor'  in req.body) data.borderColor  = req.body.borderColor  || null;
   if ('borderWidth'  in req.body) data.borderWidth  = req.body.borderWidth  ? parseInt(req.body.borderWidth)  : 0;
   if ('borderStyle'  in req.body) data.borderStyle  = req.body.borderStyle  || 'solid';
