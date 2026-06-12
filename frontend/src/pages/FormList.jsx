@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 
@@ -7,9 +7,7 @@ function Toast({ message, onHide }) {
     const t = setTimeout(onHide, 3000);
     return () => clearTimeout(t);
   }, [onHide]);
-  return (
-    <div style={s.toast}>{message}</div>
-  );
+  return <div style={s.toast}>{message}</div>;
 }
 
 function EmbedModal({ form, onClose }) {
@@ -46,44 +44,23 @@ function EmbedModal({ form, onClose }) {
   );
 }
 
-function ActionsMenu({ form, onAction }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    function handler(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    }
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  const items = [
-    { label: 'Edit Form', action: 'edit' },
-    { label: 'View Form', action: 'view' },
-    { label: 'View Submissions', action: 'submissions' },
-    { label: 'Duplicate', action: 'duplicate' },
-    { label: 'Copy Form Link', action: 'copy' },
-    { label: 'Embed Code', action: 'embed' },
-    { label: 'Delete', action: 'delete', danger: true },
-  ];
-
+function ActionButton({ icon, tooltip, onClick, danger }) {
+  const [hovered, setHovered] = useState(false);
   return (
-    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
-      <button style={s.dotsBtn} onClick={() => setOpen(o => !o)}>⋮</button>
-      {open && (
-        <div style={s.dropdown}>
-          {items.map(({ label, action, danger }) => (
-            <button
-              key={action}
-              style={{ ...s.dropdownItem, ...(danger ? s.dangerItem : {}) }}
-              onClick={() => { setOpen(false); onAction(action, form); }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      <button
+        style={{
+          ...s.iconBtn,
+          ...(danger ? s.iconBtnDanger : s.iconBtnDefault),
+          ...(hovered ? (danger ? s.iconBtnDangerHover : s.iconBtnHover) : {}),
+        }}
+        onClick={onClick}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <i className={`fa ${icon}`} />
+      </button>
+      {hovered && <div style={s.tooltip}>{tooltip}</div>}
     </div>
   );
 }
@@ -94,10 +71,6 @@ export default function FormList() {
   const [toast, setToast] = useState(null);
   const [embedForm, setEmbedForm] = useState(null);
   const navigate = useNavigate();
-
-  function showToast(message) {
-    setToast(message);
-  }
 
   async function loadForms() {
     const { data } = await api.get('/forms');
@@ -118,28 +91,24 @@ export default function FormList() {
       case 'submissions':
         navigate(`/submissions/${form.identifier}`);
         break;
-      case 'duplicate': {
+      case 'duplicate':
         await api.post(`/forms/${form.identifier}/duplicate`);
         await loadForms();
-        showToast('Form duplicated');
+        setToast('Form duplicated');
         break;
-      }
-      case 'copy': {
-        const url = `${window.location.origin}/form/${form.identifier}`;
-        navigator.clipboard.writeText(url);
-        showToast('Link copied to clipboard');
+      case 'copy':
+        navigator.clipboard.writeText(`${window.location.origin}/form/${form.identifier}`);
+        setToast('Link copied to clipboard');
         break;
-      }
       case 'embed':
         setEmbedForm(form);
         break;
-      case 'delete': {
+      case 'delete':
         if (!window.confirm(`Delete "${form.title}"? This cannot be undone.`)) break;
         await api.delete(`/forms/${form.identifier}`);
         await loadForms();
-        showToast('Form deleted');
+        setToast('Form deleted');
         break;
-      }
     }
   }
 
@@ -147,6 +116,16 @@ export default function FormList() {
     localStorage.removeItem('token');
     navigate('/login');
   }
+
+  const actions = [
+    { action: 'edit',        icon: 'fa-pencil',    tooltip: 'Edit Form' },
+    { action: 'view',        icon: 'fa-eye',       tooltip: 'View Form' },
+    { action: 'submissions', icon: 'fa-list',      tooltip: 'View Submissions' },
+    { action: 'duplicate',   icon: 'fa-clone',     tooltip: 'Duplicate' },
+    { action: 'copy',        icon: 'fa-link',      tooltip: 'Copy Form Link' },
+    { action: 'embed',       icon: 'fa-code',      tooltip: 'Embed Code' },
+    { action: 'delete',      icon: 'fa-trash-o',   tooltip: 'Delete', danger: true },
+  ];
 
   return (
     <div style={s.page}>
@@ -178,17 +157,23 @@ export default function FormList() {
             <tbody>
               {forms.map(form => (
                 <tr key={form.id} style={s.tr}>
-                  <td style={s.td}>
-                    <span style={s.formName}>{form.title}</span>
-                  </td>
+                  <td style={s.td}><span style={s.formName}>{form.title}</span></td>
                   <td style={s.td}>{form.formType}</td>
-                  <td style={s.td}>
-                    <span style={s.liveBadge}>● Live</span>
-                  </td>
+                  <td style={s.td}><span style={s.liveBadge}>● Live</span></td>
                   <td style={s.td}>{form._count.leads}</td>
                   <td style={s.td}>{new Date(form.createdAt).toLocaleDateString()}</td>
                   <td style={s.td}>
-                    <ActionsMenu form={form} onAction={handleAction} />
+                    <div style={s.actionRow}>
+                      {actions.map(({ action, icon, tooltip, danger }) => (
+                        <ActionButton
+                          key={action}
+                          icon={icon}
+                          tooltip={tooltip}
+                          danger={danger}
+                          onClick={() => handleAction(action, form)}
+                        />
+                      ))}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -204,7 +189,7 @@ export default function FormList() {
 }
 
 const s = {
-  page: { maxWidth: '1100px', margin: '0 auto', padding: '2rem' },
+  page: { maxWidth: '1200px', margin: '0 auto', padding: '2rem' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' },
   heading: { fontSize: '1.75rem', fontWeight: 700, margin: 0 },
   headerActions: { display: 'flex', gap: '0.75rem' },
@@ -215,13 +200,16 @@ const s = {
   table: { width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' },
   th: { textAlign: 'left', padding: '0.75rem 1rem', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', fontWeight: 600, color: '#374151', whiteSpace: 'nowrap' },
   tr: { borderBottom: '1px solid #f3f4f6' },
-  td: { padding: '0.85rem 1rem', verticalAlign: 'middle', color: '#374151' },
+  td: { padding: '0.75rem 1rem', verticalAlign: 'middle', color: '#374151' },
   formName: { fontWeight: 600, color: '#111' },
   liveBadge: { color: '#16a34a', fontWeight: 600, fontSize: '0.8rem' },
-  dotsBtn: { background: 'none', border: '1px solid #e5e7eb', borderRadius: '4px', padding: '0.2rem 0.6rem', cursor: 'pointer', fontSize: '1.1rem', lineHeight: 1 },
-  dropdown: { position: 'absolute', right: 0, top: '110%', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '6px', boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 100, minWidth: '170px', overflow: 'hidden' },
-  dropdownItem: { display: 'block', width: '100%', padding: '0.55rem 1rem', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', fontSize: '0.875rem', color: '#374151' },
-  dangerItem: { color: '#dc2626' },
+  actionRow: { display: 'flex', gap: '4px', alignItems: 'center' },
+  iconBtn: { width: '30px', height: '30px', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.15s' },
+  iconBtnDefault: { background: '#f3f4f6', color: '#4b5563' },
+  iconBtnHover: { background: '#e0e7ff', color: '#4f46e5' },
+  iconBtnDanger: { background: '#f3f4f6', color: '#9ca3af' },
+  iconBtnDangerHover: { background: '#fee2e2', color: '#dc2626' },
+  tooltip: { position: 'absolute', bottom: '110%', left: '50%', transform: 'translateX(-50%)', background: '#1f2937', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 50 },
   toast: { position: 'fixed', bottom: '1.5rem', right: '1.5rem', background: '#1f2937', color: '#fff', padding: '0.75rem 1.25rem', borderRadius: '6px', fontSize: '0.875rem', zIndex: 999, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' },
   overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' },
   modal: { background: '#fff', borderRadius: '8px', width: '680px', maxWidth: '95vw', padding: '1.5rem', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' },
