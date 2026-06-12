@@ -23,6 +23,7 @@ model Form {
   logoPath        String?
   bgColor         String?
   bgImagePath     String?
+  formType        String   @default("Lead Form")
   userId     Int
   user       User     @relation(fields: [userId], references: [id])
   leads      Lead[]
@@ -32,7 +33,7 @@ model Form {
 model Lead {
   id        Int      @id @default(autoincrement())
   formId    Int
-  form      Form     @relation(fields: [formId], references: [id])
+  form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
   data      Json
   createdAt DateTime @default(now())
 }

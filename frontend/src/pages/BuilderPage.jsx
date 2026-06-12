@@ -8,6 +8,7 @@ export default function BuilderPage() {
   const navigate = useNavigate();
 
   const [title, setTitle] = useState("");
+  const [formType, setFormType] = useState("Lead Form");
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
   const [bgColor, setBgColor] = useState("#ffffff");
@@ -24,6 +25,7 @@ export default function BuilderPage() {
     if (!isNew) {
       api.get(`/forms/${identifier}`).then(({ data }) => {
         setTitle(data.title);
+        if (data.formType) setFormType(data.formType);
         if (data.logoUrl) setLogoPreview(data.logoUrl);
         if (data.bgColor) setBgColor(data.bgColor);
         if (data.bgImageUrl) setBgImagePreview(data.bgImageUrl);
@@ -168,6 +170,7 @@ export default function BuilderPage() {
 
     const formData = new FormData();
     formData.append("title", title);
+    formData.append("formType", formType);
     formData.append("schema", JSON.stringify(schema));
     formData.append("bgColor", bgColor);
     if (logoFile) formData.append("logo", logoFile);
@@ -223,6 +226,19 @@ export default function BuilderPage() {
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Enter form title..."
           />
+        </div>
+
+        <div style={styles.field}>
+          <label style={styles.label}>Form Type</label>
+          <select
+            style={styles.input}
+            value={formType}
+            onChange={(e) => setFormType(e.target.value)}
+          >
+            {['Lead Form', 'Contact Form', 'Survey', 'Event Registration', 'Other'].map(t => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
         </div>
 
         <div style={styles.field}>

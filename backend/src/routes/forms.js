@@ -32,7 +32,15 @@ router.get('/', requireAuth, async (req, res) => {
   const forms = await prisma.form.findMany({
     where: { userId: req.user.id },
     orderBy: { createdAt: 'desc' },
-    select: { id: true, identifier: true, title: true, logoPath: true, createdAt: true },
+    select: {
+      id: true,
+      identifier: true,
+      title: true,
+      formType: true,
+      logoPath: true,
+      createdAt: true,
+      _count: { select: { leads: true } },
+    },
   });
   res.json(forms);
 });
@@ -54,9 +62,22 @@ router.get('/:identifier', async (req, res) => {
   });
 });
 
+// Get submissions for a form (auth required)
+router.get('/:identifier/submissions', requireAuth, async (req, res) => {
+  const form = await prisma.form.findUnique({ where: { identifier: req.params.identifier } });
+  if (!form) return res.status(404).json({ error: 'Form not found' });
+  if (form.userId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
+
+  const leads = await prisma.lead.findMany({
+    where: { formId: form.id },
+    orderBy: { createdAt: 'desc' },
+  });
+  res.json({ title: form.title, leads });
+});
+
 // Create form
 router.post('/', requireAuth, uploadFields, async (req, res) => {
-  const { title, schema, bgColor } = req.body;
+  const { title, schema, bgColor, formType } = req.body;
   if (!title || !schema) {
     return res.status(400).json({ error: 'Title and schema required' });
   }
@@ -76,6 +97,7 @@ router.post('/', requireAuth, uploadFields, async (req, res) => {
       identifier: `temp-${Date.now()}`,
       title,
       schema: parsedSchema,
+      formType: formType || 'Lead Form',
       logoPath: logoFile ? logoFile.path : null,
       bgColor: bgColor || null,
       bgImagePath: bgImageFile ? bgImageFile.path : null,
@@ -89,6 +111,29 @@ router.post('/', requireAuth, uploadFields, async (req, res) => {
   res.status(201).json(updated);
 });
 
+// Duplicate form
+router.post('/:identifier/duplicate', requireAuth, async (req, res) => {
+  const form = await prisma.form.findUnique({ where: { identifier: req.params.identifier } });
+  if (!form) return res.status(404).json({ error: 'Form not found' });
+  if (form.userId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
+
+  const copy = await prisma.form.create({
+    data: {
+      identifier: `temp-${Date.now()}`,
+      title: `Copy of ${form.title}`,
+      schema: form.schema,
+      formType: form.formType,
+      bgColor: form.bgColor,
+      userId: req.user.id,
+    },
+  });
+
+  const identifier = generateIdentifier(copy.id, req.user.id);
+  const updated = await prisma.form.update({ where: { id: copy.id }, data: { identifier } });
+
+  res.status(201).json(updated);
+});
+
 // Update form
 router.patch('/:identifier', requireAuth, uploadFields, async (req, res) => {
   const form = await prisma.form.findUnique({ where: { identifier: req.params.identifier } });
@@ -97,6 +142,7 @@ router.patch('/:identifier', requireAuth, uploadFields, async (req, res) => {
 
   const data = {};
   if (req.body.title) data.title = req.body.title;
+  if (req.body.formType) data.formType = req.body.formType;
   if (req.body.schema) {
     try {
       data.schema = JSON.parse(req.body.schema);
@@ -113,6 +159,16 @@ router.patch('/:identifier', requireAuth, uploadFields, async (req, res) => {
 
   const updated = await prisma.form.update({ where: { id: form.id }, data });
   res.json(updated);
+});
+
+// Delete form
+router.delete('/:identifier', requireAuth, async (req, res) => {
+  const form = await prisma.form.findUnique({ where: { identifier: req.params.identifier } });
+  if (!form) return res.status(404).json({ error: 'Form not found' });
+  if (form.userId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
+
+  await prisma.form.delete({ where: { id: form.id } });
+  res.json({ message: 'Form deleted' });
 });
 
 module.exports = router;
