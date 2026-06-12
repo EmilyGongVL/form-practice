@@ -92,7 +92,7 @@ export default function PublicForm() {
 }
 
 const styles = {
-  page: { minHeight: '100vh', display: 'flex', justifyContent: 'center', padding: '3rem 1rem' },
+  page: { minHeight: '100vh', display: 'flex', justifyContent: 'center', padding: '3rem 1rem', background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%)' },
   card: { borderRadius: '8px', padding: '2rem', width: '100%', maxWidth: '640px' },
   logo: { width: '80px', height: '80px', objectFit: 'contain', marginBottom: '1rem', borderRadius: '4px' },
   title: { fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem' },
