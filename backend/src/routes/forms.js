@@ -17,8 +17,9 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 const uploadFields = upload.fields([
-  { name: 'logo', maxCount: 1 },
+  { name: 'logo',    maxCount: 1 },
   { name: 'bgImage', maxCount: 1 },
+  { name: 'banner',  maxCount: 1 },
 ]);
 
 function toUrl(req, filePath) {
@@ -52,7 +53,7 @@ router.get('/:identifier', async (req, res) => {
     select: {
       title: true, schema: true, logoPath: true, bgColor: true, bgImagePath: true,
       borderColor: true, borderWidth: true, borderStyle: true, borderRadius: true, cardShadow: true,
-      formType: true,
+      bannerImagePath: true, formType: true,
     },
   });
   if (!form) return res.status(404).json({ error: 'Form not found' });
@@ -68,6 +69,7 @@ router.get('/:identifier', async (req, res) => {
     borderStyle: form.borderStyle || 'solid',
     borderRadius: form.borderRadius ?? 8,
     cardShadow: form.cardShadow || 'md',
+    bannerImageUrl: toUrl(req, form.bannerImagePath),
   });
 });
 
@@ -100,6 +102,7 @@ router.post('/', requireAuth, uploadFields, async (req, res) => {
 
   const logoFile = req.files?.logo?.[0];
   const bgImageFile = req.files?.bgImage?.[0];
+  const bannerFile = req.files?.banner?.[0];
 
   const form = await prisma.form.create({
     data: {
@@ -110,6 +113,7 @@ router.post('/', requireAuth, uploadFields, async (req, res) => {
       logoPath: logoFile ? logoFile.path : null,
       bgColor: bgColor || null,
       bgImagePath: bgImageFile ? bgImageFile.path : null,
+      bannerImagePath: bannerFile ? bannerFile.path : null,
       borderColor: borderColor || null,
       borderWidth: borderWidth ? parseInt(borderWidth) : 0,
       borderStyle: borderStyle || 'solid',
@@ -174,8 +178,11 @@ router.patch('/:identifier', requireAuth, uploadFields, async (req, res) => {
 
   const logoFile = req.files?.logo?.[0];
   const bgImageFile = req.files?.bgImage?.[0];
+  const bannerFile = req.files?.banner?.[0];
   if (logoFile) data.logoPath = logoFile.path;
   if (bgImageFile) data.bgImagePath = bgImageFile.path;
+  if (bannerFile) data.bannerImagePath = bannerFile.path;
+  if (req.body.removeBanner === 'true') data.bannerImagePath = null;
 
   const updated = await prisma.form.update({ where: { id: form.id }, data });
   res.json(updated);

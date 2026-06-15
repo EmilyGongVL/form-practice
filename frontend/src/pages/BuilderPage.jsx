@@ -15,11 +15,13 @@ export default function BuilderPage() {
   const [bgColor, setBgColor] = useState("#ffffff");
   const [bgImageFile, setBgImageFile] = useState(null);
   const [bgImagePreview, setBgImagePreview] = useState(null);
-  const [borderColor,  setBorderColor]  = useState('#000000');
-  const [borderWidth,  setBorderWidth]  = useState(0);
-  const [borderStyle,  setBorderStyle]  = useState('solid');
+  const [borderColor, setBorderColor] = useState("#000000");
+  const [borderWidth, setBorderWidth] = useState(0);
+  const [borderStyle, setBorderStyle] = useState("solid");
   const [borderRadius, setBorderRadius] = useState(8);
-  const [cardShadow,   setCardShadow]   = useState('md');
+  const [cardShadow, setCardShadow] = useState("md");
+  const [bannerFile,    setBannerFile]    = useState(null);
+  const [bannerPreview, setBannerPreview] = useState(null);
   const [savedIdentifier, setSavedIdentifier] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -39,11 +41,12 @@ export default function BuilderPage() {
           setBgTransparent(true);
         }
         if (data.bgImageUrl) setBgImagePreview(data.bgImageUrl);
-        if (data.borderColor  != null) setBorderColor(data.borderColor);
-        if (data.borderWidth  != null) setBorderWidth(data.borderWidth);
-        if (data.borderStyle  != null) setBorderStyle(data.borderStyle);
+        if (data.borderColor != null) setBorderColor(data.borderColor);
+        if (data.borderWidth != null) setBorderWidth(data.borderWidth);
+        if (data.borderStyle != null) setBorderStyle(data.borderStyle);
         if (data.borderRadius != null) setBorderRadius(data.borderRadius);
-        if (data.cardShadow   != null) setCardShadow(data.cardShadow);
+        if (data.cardShadow != null) setCardShadow(data.cardShadow);
+        if (data.bannerImageUrl) setBannerPreview(data.bannerImageUrl);
         initialSchemaRef.current = data.schema;
         mountBuilder(data.schema);
       });
@@ -54,7 +57,11 @@ export default function BuilderPage() {
     return () => {
       if (builderInstanceRef.current) {
         if (builderInstanceRef.current._helpInterceptor) {
-          document.removeEventListener('click', builderInstanceRef.current._helpInterceptor, true);
+          document.removeEventListener(
+            "click",
+            builderInstanceRef.current._helpInterceptor,
+            true,
+          );
         }
         builderInstanceRef.current.destroy();
         builderInstanceRef.current = null;
@@ -65,13 +72,13 @@ export default function BuilderPage() {
   function mountBuilder(schema) {
     if (!builderRef.current) return;
     //customize form builder options to hide irrelevant tabs.
-    const hiddenTabs = { ignore: true };
+    const hiddenTabs = { ignore: false };
     const hiddenDisplayFields = {
-      key: 'display',
+      key: "display",
       components: [
-        { key: 'prefix', ignore: true },
-        { key: 'suffix', ignore: true },
-        { key: 'widget', ignore: true },
+        { key: "prefix", ignore: false },
+        { key: "suffix", ignore: false },
+        { key: "widget", ignore: false },
       ],
     };
     const options = {
@@ -139,20 +146,24 @@ export default function BuilderPage() {
       },
     };
 
-    window.Formio.builder(builderRef.current, schema, options).then((builder) => {
-      builderInstanceRef.current = builder;
+    window.Formio.builder(builderRef.current, schema, options).then(
+      (builder) => {
+        builderInstanceRef.current = builder;
 
-      const interceptHelp = (e) => {
-        const link = e.target.closest('a[href*="help.form.io"], a[href*="form.io/developers"]');
-        if (link) {
-          e.preventDefault();
-          e.stopPropagation();
-          window.open('/help', '_blank');
-        }
-      };
-      document.addEventListener('click', interceptHelp, true);
-      builder._helpInterceptor = interceptHelp;
-    });
+        const interceptHelp = (e) => {
+          const link = e.target.closest(
+            'a[href*="help.form.io"], a[href*="form.io/developers"]',
+          );
+          if (link) {
+            e.preventDefault();
+            e.stopPropagation();
+            window.open("/help", "_blank");
+          }
+        };
+        document.addEventListener("click", interceptHelp, true);
+        builder._helpInterceptor = interceptHelp;
+      },
+    );
   }
 
   function handleLogoChange(e) {
@@ -195,11 +206,13 @@ export default function BuilderPage() {
       if (bgImageFile) formData.append("bgImage", bgImageFile);
     }
     if (logoFile) formData.append("logo", logoFile);
-    formData.append("borderColor",  borderColor);
-    formData.append("borderWidth",  borderWidth);
-    formData.append("borderStyle",  borderStyle);
+    if (bannerFile) formData.append("banner", bannerFile);
+    if (!bannerPreview && !bannerFile) formData.append("removeBanner", "true");
+    formData.append("borderColor", borderColor);
+    formData.append("borderWidth", borderWidth);
+    formData.append("borderStyle", borderStyle);
     formData.append("borderRadius", borderRadius);
-    formData.append("cardShadow",   cardShadow);
+    formData.append("cardShadow", cardShadow);
 
     try {
       if (isNew) {
@@ -260,8 +273,16 @@ export default function BuilderPage() {
             value={formType}
             onChange={(e) => setFormType(e.target.value)}
           >
-            {['Lead Form', 'Contact Form', 'Survey', 'Event Registration', 'Other'].map(t => (
-              <option key={t} value={t}>{t}</option>
+            {[
+              "Lead Form",
+              "Contact Form",
+              "Survey",
+              "Event Registration",
+              "Other",
+            ].map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
             ))}
           </select>
         </div>
@@ -279,17 +300,47 @@ export default function BuilderPage() {
         </div>
 
         <div style={styles.field}>
+          <label style={styles.label}>
+            Banner Image <span style={styles.hint}>(full-width, top of card)</span>
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+              setBannerFile(file);
+              setBannerPreview(URL.createObjectURL(file));
+            }}
+          />
+          {bannerPreview && (
+            <div style={styles.bgPreviewWrap}>
+              <img src={bannerPreview} alt="banner preview" style={styles.bannerPreview} />
+              <button
+                style={styles.clearBtn}
+                onClick={() => { setBannerFile(null); setBannerPreview(null); }}
+              >
+                ✕ Remove
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div style={styles.field}>
           <label style={styles.label}>Card Background</label>
           <label style={styles.checkRow}>
             <input
               type="checkbox"
               checked={bgTransparent}
-              onChange={e => {
+              onChange={(e) => {
                 setBgTransparent(e.target.checked);
-                if (e.target.checked) { setBgImageFile(null); setBgImagePreview(null); }
+                if (e.target.checked) {
+                  setBgImageFile(null);
+                  setBgImagePreview(null);
+                }
               }}
             />
-            <span style={{ fontSize: '0.875rem' }}>Transparent</span>
+            <span style={{ fontSize: "0.875rem" }}>Transparent</span>
           </label>
           {!bgTransparent && (
             <>
@@ -302,8 +353,14 @@ export default function BuilderPage() {
                 />
                 <span style={styles.colorHex}>{bgColor}</span>
               </div>
-              <span style={{ ...styles.hint, marginTop: '0.25rem' }}>or upload an image (overrides colour)</span>
-              <input type="file" accept="image/*" onChange={handleBgImageChange} />
+              <span style={{ ...styles.hint, marginTop: "0.25rem" }}>
+                or upload an image (overrides colour)
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleBgImageChange}
+              />
               {bgImagePreview && (
                 <div style={styles.bgPreviewWrap}>
                   <div style={{ ...styles.bgPreview, ...bgPreviewStyle }} />
@@ -322,34 +379,55 @@ export default function BuilderPage() {
             <div style={styles.borderField}>
               <span style={styles.subLabel}>Width (px)</span>
               <input
-                type="number" min="0" max="10"
-                style={{ ...styles.input, minWidth: '70px' }}
+                type="number"
+                min="0"
+                max="10"
+                style={{ ...styles.input, minWidth: "70px" }}
                 value={borderWidth}
-                onChange={e => setBorderWidth(Number(e.target.value))}
+                onChange={(e) => setBorderWidth(Number(e.target.value))}
               />
             </div>
             <div style={styles.borderField}>
               <span style={styles.subLabel}>Style</span>
-              <select style={{ ...styles.input, minWidth: '90px' }} value={borderStyle} onChange={e => setBorderStyle(e.target.value)}>
-                {['solid', 'dashed', 'dotted'].map(s => <option key={s} value={s}>{s}</option>)}
+              <select
+                style={{ ...styles.input, minWidth: "90px" }}
+                value={borderStyle}
+                onChange={(e) => setBorderStyle(e.target.value)}
+              >
+                {["solid", "dashed", "dotted"].map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
               </select>
             </div>
             <div style={styles.borderField}>
               <span style={styles.subLabel}>Colour</span>
-              <input type="color" value={borderColor} onChange={e => setBorderColor(e.target.value)} style={styles.colorPicker} />
+              <input
+                type="color"
+                value={borderColor}
+                onChange={(e) => setBorderColor(e.target.value)}
+                style={styles.colorPicker}
+              />
             </div>
             <div style={styles.borderField}>
               <span style={styles.subLabel}>Radius (px)</span>
               <input
-                type="number" min="0" max="50"
-                style={{ ...styles.input, minWidth: '70px' }}
+                type="number"
+                min="0"
+                max="50"
+                style={{ ...styles.input, minWidth: "70px" }}
                 value={borderRadius}
-                onChange={e => setBorderRadius(Number(e.target.value))}
+                onChange={(e) => setBorderRadius(Number(e.target.value))}
               />
             </div>
             <div style={styles.borderField}>
               <span style={styles.subLabel}>Shadow</span>
-              <select style={{ ...styles.input, minWidth: '100px' }} value={cardShadow} onChange={e => setCardShadow(e.target.value)}>
+              <select
+                style={{ ...styles.input, minWidth: "100px" }}
+                value={cardShadow}
+                onChange={(e) => setCardShadow(e.target.value)}
+              >
                 <option value="none">None</option>
                 <option value="sm">Light</option>
                 <option value="md">Medium</option>
@@ -357,14 +435,26 @@ export default function BuilderPage() {
               </select>
             </div>
           </div>
-          <div style={{
-            marginTop: '0.5rem',
-            width: '80px', height: '50px',
-            borderRadius: `${borderRadius}px`,
-            border: borderWidth > 0 ? `${borderWidth}px ${borderStyle} ${borderColor}` : '1px solid #e5e7eb',
-            background: '#fff',
-            boxShadow: { none: 'none', sm: '0 1px 4px rgba(0,0,0,0.06)', md: '0 2px 12px rgba(0,0,0,0.08)', lg: '0 4px 24px rgba(0,0,0,0.18)' }[cardShadow] ?? 'none',
-          }} />
+          <div
+            style={{
+              marginTop: "0.5rem",
+              width: "80px",
+              height: "50px",
+              borderRadius: `${borderRadius}px`,
+              border:
+                borderWidth > 0
+                  ? `${borderWidth}px ${borderStyle} ${borderColor}`
+                  : "1px solid #e5e7eb",
+              background: "#fff",
+              boxShadow:
+                {
+                  none: "none",
+                  sm: "0 1px 4px rgba(0,0,0,0.06)",
+                  md: "0 2px 12px rgba(0,0,0,0.08)",
+                  lg: "0 4px 24px rgba(0,0,0,0.18)",
+                }[cardShadow] ?? "none",
+            }}
+          />
         </div>
       </div>
 
@@ -462,6 +552,13 @@ const styles = {
     borderRadius: "4px",
     border: "1px solid #ddd",
   },
+  bannerPreview: {
+    width: '240px',
+    height: '80px',
+    objectFit: 'cover',
+    borderRadius: '4px',
+    border: '1px solid #eee',
+  },
   clearBtn: {
     padding: "0.25rem 0.6rem",
     background: "none",
@@ -497,8 +594,18 @@ const styles = {
     borderRadius: "8px",
     padding: "1rem",
   },
-  checkRow: { display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' },
-  borderGrid: { display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' },
-  borderField: { display: 'flex', flexDirection: 'column', gap: '0.25rem' },
-  subLabel: { fontSize: '0.75rem', color: '#6b7280', fontWeight: 500 },
+  checkRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.4rem",
+    cursor: "pointer",
+  },
+  borderGrid: {
+    display: "flex",
+    gap: "0.75rem",
+    flexWrap: "wrap",
+    alignItems: "flex-end",
+  },
+  borderField: { display: "flex", flexDirection: "column", gap: "0.25rem" },
+  subLabel: { fontSize: "0.75rem", color: "#6b7280", fontWeight: 500 },
 };

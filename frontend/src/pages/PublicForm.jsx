@@ -88,9 +88,25 @@ export default function PublicForm() {
     } : formData.bgColor ? { background: formData.bgColor } : {}),
   };
 
+  const radius = formData.borderRadius ?? 8;
+
   return (
     <div style={{ ...styles.page, ...(inIframe ? { background: 'transparent' } : {}) }}>
       <div style={{ ...styles.card, ...cardStyle }}>
+        {formData.bannerImageUrl && (
+          <img
+            src={formData.bannerImageUrl}
+            alt="banner"
+            style={{
+              display: 'block',
+              width: 'calc(100% + 4rem)',
+              height: '160px',
+              objectFit: 'cover',
+              borderRadius: `${radius}px ${radius}px 0 0`,
+              margin: '-2rem -2rem 1.5rem -2rem',
+            }}
+          />
+        )}
         {formData.logoUrl && (
           <img src={formData.logoUrl} alt="logo" style={styles.logo} />
         )}

@@ -10,6 +10,11 @@ export default function HelpPage() {
         <a style={s.navSub} href="#data">Data</a>
         <a style={s.navLink} href="#display-tab">Display Tab</a>
         <a style={s.navLink} href="#validation-tab">Validation Tab</a>
+        <a style={s.navLink} href="#data-tab">Data Tab</a>
+        <a style={s.navLink} href="#api-tab">API Tab</a>
+        <a style={s.navLink} href="#conditional-tab">Conditional Tab</a>
+        <a style={s.navLink} href="#logic-tab">Logic Tab</a>
+        <a style={s.navLink} href="#layout-tab">Layout Tab</a>
       </nav>
 
       <main style={s.main}>
@@ -152,6 +157,119 @@ export default function HelpPage() {
                 ['Error Label', 'Replaces the field name in error messages. E.g. "Mobile number" instead of "phoneNumber".'],
                 ['Custom Error Message', 'Overrides the default "This field is invalid" text with your own wording.'],
                 ['Custom Validation', 'A JavaScript expression for complex rules. The variable "input" holds the current value. Return true to pass, or a string to show as an error message.'],
+              ].map(([name, desc]) => (
+                <tr key={name}><td style={s.td}><strong>{name}</strong></td><td style={s.td}>{desc}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+        <hr style={s.hr} />
+
+        {/* ── DATA TAB ── */}
+        <section id="data-tab">
+          <h2 style={s.h2}>Data Tab</h2>
+          <p style={s.p}>Controls default values and how data is stored in the submission.</p>
+          <table style={s.table}>
+            <thead><tr><th style={s.th}>Field</th><th style={s.th}>What it does</th></tr></thead>
+            <tbody>
+              {[
+                ['Default Value', 'The value pre-filled when the form first loads. The user can overwrite it.'],
+                ['Multiple Values', 'Allows the field to collect more than one value, stored as an array.'],
+                ['Protected', 'Marks the value as sensitive — it is saved but excluded from API read responses.'],
+                ['Persistent', 'When off, the field value is not included in the final form submission data.'],
+                ['Input Type', 'Changes the underlying HTML input type attribute (e.g. text, tel, search).'],
+                ['Table View', 'Whether this field value appears as a column when the submission is viewed in a table.'],
+                ['Modal Edit', 'Opens an edit modal when this field is inside a Data Grid or Edit Grid row.'],
+              ].map(([name, desc]) => (
+                <tr key={name}><td style={s.td}><strong>{name}</strong></td><td style={s.td}>{desc}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+        <hr style={s.hr} />
+
+        {/* ── API TAB ── */}
+        <section id="api-tab">
+          <h2 style={s.h2}>API Tab</h2>
+          <p style={s.p}>Controls the field's key in the submission JSON and any custom metadata.</p>
+          <table style={s.table}>
+            <thead><tr><th style={s.th}>Field</th><th style={s.th}>What it does</th></tr></thead>
+            <tbody>
+              {[
+                ['Property Name', 'The unique key used for this field in the JSON submission object (e.g. "firstName"). Must be unique within the form.'],
+                ['Custom Properties', 'Arbitrary key-value pairs attached to the component schema — useful for passing metadata to custom code or integrations.'],
+                ['Expose to Template', 'Makes this field\'s value available as a variable when rendering other fields\' templates or calculated values.'],
+              ].map(([name, desc]) => (
+                <tr key={name}><td style={s.td}><strong>{name}</strong></td><td style={s.td}>{desc}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+        <hr style={s.hr} />
+
+        {/* ── CONDITIONAL TAB ── */}
+        <section id="conditional-tab">
+          <h2 style={s.h2}>Conditional Tab</h2>
+          <p style={s.p}>Show or hide this field based on the value of another field, without writing code.</p>
+          <table style={s.table}>
+            <thead><tr><th style={s.th}>Field</th><th style={s.th}>What it does</th></tr></thead>
+            <tbody>
+              {[
+                ['Simple — This component should', 'Choose Show or Hide as the action when the condition is met.'],
+                ['Simple — When the form component', 'Pick the other field whose value you want to check.'],
+                ['Simple — Has the value', 'The exact value that triggers the show/hide action.'],
+                ['Advanced Condition', 'A JavaScript expression for complex rules. Use the "data" object to access any field value (e.g. show = data.country === "AU"). Must return a boolean.'],
+              ].map(([name, desc]) => (
+                <tr key={name}><td style={s.td}><strong>{name}</strong></td><td style={s.td}>{desc}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+        <hr style={s.hr} />
+
+        {/* ── LOGIC TAB ── */}
+        <section id="logic-tab">
+          <h2 style={s.h2}>Logic Tab</h2>
+          <p style={s.p}>Trigger actions on this field automatically when conditions are met — for example, changing its value or disabling it based on user input elsewhere.</p>
+          <table style={s.table}>
+            <thead><tr><th style={s.th}>Field</th><th style={s.th}>What it does</th></tr></thead>
+            <tbody>
+              {[
+                ['Name', 'A label for this logic rule — only used for your reference inside the builder.'],
+                ['Trigger — Simple', 'Fires when a chosen field equals a specific value. No code needed.'],
+                ['Trigger — Event', 'Fires on a named event emitted by the form (e.g. a custom event dispatched in other logic).'],
+                ['Trigger — Javascript', 'Fires when a JavaScript expression returns true. Access field values via the "data" object.'],
+                ['Trigger — JSON Logic', 'Fires when a JSON Logic rule evaluates to true — a code-free alternative to JavaScript.'],
+                ['Action — Value', 'Sets this field\'s value to a static string or a calculated expression when the trigger fires.'],
+                ['Action — Property', 'Changes a component property (e.g. disabled, hidden, required) when the trigger fires.'],
+                ['Action — Merge Component Schema', 'Merges a partial JSON schema into this component\'s definition, overriding specific settings.'],
+                ['Action — Custom Action', 'Runs arbitrary JavaScript when the trigger fires. Use "component", "instance", and "value" variables.'],
+              ].map(([name, desc]) => (
+                <tr key={name}><td style={s.td}><strong>{name}</strong></td><td style={s.td}>{desc}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+        <hr style={s.hr} />
+
+        {/* ── LAYOUT TAB ── */}
+        <section id="layout-tab">
+          <h2 style={s.h2}>Layout Tab</h2>
+          <p style={s.p}>Controls the Bootstrap grid placement of this field within its row.</p>
+          <table style={s.table}>
+            <thead><tr><th style={s.th}>Field</th><th style={s.th}>What it does</th></tr></thead>
+            <tbody>
+              {[
+                ['Size', 'Sets the input size class: Small, Medium (default), or Large — affects padding and font size.'],
+                ['Width', 'Number of Bootstrap columns this field spans (1–12). 12 = full row width.'],
+                ['Offset', 'Empty columns inserted before this field — pushes it to the right without another field filling the gap.'],
+                ['Push', 'Moves the field right by the given number of columns using CSS positioning, without affecting the flow of other fields.'],
+                ['Pull', 'Moves the field left by the given number of columns using CSS positioning, without affecting the flow of other fields.'],
               ].map(([name, desc]) => (
                 <tr key={name}><td style={s.td}><strong>{name}</strong></td><td style={s.td}>{desc}</td></tr>
               ))}
