@@ -53,7 +53,7 @@ router.get('/:identifier', async (req, res) => {
     select: {
       title: true, schema: true, logoPath: true, bgColor: true, bgImagePath: true,
       borderColor: true, borderWidth: true, borderStyle: true, borderRadius: true, cardShadow: true,
-      bannerImagePath: true, formType: true,
+      bannerImagePath: true, logoAlign: true, formType: true,
     },
   });
   if (!form) return res.status(404).json({ error: 'Form not found' });
@@ -70,6 +70,7 @@ router.get('/:identifier', async (req, res) => {
     borderRadius: form.borderRadius ?? 8,
     cardShadow: form.cardShadow || 'md',
     bannerImageUrl: toUrl(req, form.bannerImagePath),
+    logoAlign: form.logoAlign || 'left',
   });
 });
 
@@ -114,6 +115,7 @@ router.post('/', requireAuth, uploadFields, async (req, res) => {
       bgColor: bgColor || null,
       bgImagePath: bgImageFile ? bgImageFile.path : null,
       bannerImagePath: bannerFile ? bannerFile.path : null,
+      logoAlign: req.body.logoAlign || 'left',
       borderColor: borderColor || null,
       borderWidth: borderWidth ? parseInt(borderWidth) : 0,
       borderStyle: borderStyle || 'solid',
@@ -183,6 +185,8 @@ router.patch('/:identifier', requireAuth, uploadFields, async (req, res) => {
   if (bgImageFile) data.bgImagePath = bgImageFile.path;
   if (bannerFile) data.bannerImagePath = bannerFile.path;
   if (req.body.removeBanner === 'true') data.bannerImagePath = null;
+  if (req.body.removeLogo === 'true') data.logoPath = null;
+  if ('logoAlign' in req.body) data.logoAlign = req.body.logoAlign || 'left';
 
   const updated = await prisma.form.update({ where: { id: form.id }, data });
   res.json(updated);

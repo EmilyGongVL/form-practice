@@ -11,6 +11,8 @@ export default function BuilderPage() {
   const [formType, setFormType] = useState("Lead Form");
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
+  const [logoAlign, setLogoAlign] = useState('left');
+  const [removeLogo, setRemoveLogo] = useState(false);
   const [bgTransparent, setBgTransparent] = useState(false);
   const [bgColor, setBgColor] = useState("#ffffff");
   const [bgImageFile, setBgImageFile] = useState(null);
@@ -35,6 +37,7 @@ export default function BuilderPage() {
         setTitle(data.title);
         if (data.formType) setFormType(data.formType);
         if (data.logoUrl) setLogoPreview(data.logoUrl);
+        if (data.logoAlign) setLogoAlign(data.logoAlign);
         if (data.bgColor) {
           setBgColor(data.bgColor);
         } else if (!data.bgImageUrl) {
@@ -206,6 +209,8 @@ export default function BuilderPage() {
       if (bgImageFile) formData.append("bgImage", bgImageFile);
     }
     if (logoFile) formData.append("logo", logoFile);
+    if (removeLogo) formData.append("removeLogo", "true");
+    formData.append("logoAlign", logoAlign);
     if (bannerFile) formData.append("banner", bannerFile);
     if (!bannerPreview && !bannerFile) formData.append("removeBanner", "true");
     formData.append("borderColor", borderColor);
@@ -289,14 +294,39 @@ export default function BuilderPage() {
 
         <div style={styles.field}>
           <label style={styles.label}>Logo</label>
-          <input type="file" accept="image/*" onChange={handleLogoChange} />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+              setLogoFile(file);
+              setLogoPreview(URL.createObjectURL(file));
+              setRemoveLogo(false);
+            }}
+          />
           {logoPreview && (
-            <img
-              src={logoPreview}
-              alt="logo preview"
-              style={styles.logoPreview}
-            />
+            <div style={styles.bgPreviewWrap}>
+              <img src={logoPreview} alt="logo preview" style={styles.logoPreview} />
+              <button
+                style={styles.clearBtn}
+                onClick={() => { setLogoFile(null); setLogoPreview(null); setRemoveLogo(true); }}
+              >
+                ✕ Remove
+              </button>
+            </div>
           )}
+          <div style={styles.alignRow}>
+            {['left', 'center', 'right'].map(a => (
+              <button
+                key={a}
+                style={{ ...styles.alignBtn, ...(logoAlign === a ? styles.alignBtnActive : {}) }}
+                onClick={() => setLogoAlign(a)}
+              >
+                {a === 'left' ? '⬛ Left' : a === 'center' ? '⬛ Centre' : 'Right ⬛'}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div style={styles.field}>
@@ -594,6 +624,9 @@ const styles = {
     borderRadius: "8px",
     padding: "1rem",
   },
+  alignRow: { display: 'flex', gap: '0.4rem', marginTop: '0.25rem' },
+  alignBtn: { padding: '0.25rem 0.6rem', border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer', background: '#f9fafb', fontSize: '0.75rem', color: '#374151' },
+  alignBtnActive: { background: '#e0e7ff', borderColor: '#6366f1', color: '#4f46e5', fontWeight: 600 },
   checkRow: {
     display: "flex",
     alignItems: "center",

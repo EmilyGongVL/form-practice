@@ -108,7 +108,9 @@ export default function PublicForm() {
           />
         )}
         {formData.logoUrl && (
-          <img src={formData.logoUrl} alt="logo" style={styles.logo} />
+          <div style={{ textAlign: formData.logoAlign || 'left', marginBottom: '1rem' }}>
+            <img src={formData.logoUrl} alt="logo" style={styles.logo} />
+          </div>
         )}
         <h1 style={styles.title}>{formData.title}</h1>
         <div ref={formRef} />
@@ -120,7 +122,7 @@ export default function PublicForm() {
 const styles = {
   page: { minHeight: '100vh', display: 'flex', justifyContent: 'center', padding: '3rem 1rem', background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%)' },
   card: { borderRadius: '8px', padding: '2rem', width: '100%', maxWidth: '640px' },
-  logo: { width: '80px', height: '80px', objectFit: 'contain', marginBottom: '1rem', borderRadius: '4px' },
+  logo: { width: '80px', height: '80px', objectFit: 'contain', borderRadius: '4px' },
   title: { fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem' },
   center: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   error: { color: '#dc2626', fontSize: '1.1rem' },

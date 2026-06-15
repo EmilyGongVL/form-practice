@@ -30,6 +30,7 @@ model Form {
   borderRadius    Int?     @default(8)
   cardShadow      String?  @default("md")
   bannerImagePath String?
+  logoAlign       String?  @default("left")
   userId     Int
   user       User     @relation(fields: [userId], references: [id])
   leads      Lead[]
