@@ -31,6 +31,7 @@ model Form {
   cardShadow      String?  @default("md")
   bannerImagePath String?
   logoAlign       String?  @default("left")
+  btnColor        String?
   userId     Int
   user       User     @relation(fields: [userId], references: [id])
   leads      Lead[]

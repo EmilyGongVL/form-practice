@@ -24,6 +24,8 @@ export default function BuilderPage() {
   const [cardShadow, setCardShadow] = useState("md");
   const [bannerFile,    setBannerFile]    = useState(null);
   const [bannerPreview, setBannerPreview] = useState(null);
+  const [btnColorEnabled, setBtnColorEnabled] = useState(false);
+  const [btnColor,        setBtnColor]        = useState('#0d6efd');
   const [savedIdentifier, setSavedIdentifier] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -50,6 +52,7 @@ export default function BuilderPage() {
         if (data.borderRadius != null) setBorderRadius(data.borderRadius);
         if (data.cardShadow != null) setCardShadow(data.cardShadow);
         if (data.bannerImageUrl) setBannerPreview(data.bannerImageUrl);
+        if (data.btnColor) { setBtnColor(data.btnColor); setBtnColorEnabled(true); }
         initialSchemaRef.current = data.schema;
         mountBuilder(data.schema);
       });
@@ -218,6 +221,7 @@ export default function BuilderPage() {
     formData.append("borderStyle", borderStyle);
     formData.append("borderRadius", borderRadius);
     formData.append("cardShadow", cardShadow);
+    formData.append("btnColor", btnColorEnabled ? btnColor : '');
 
     try {
       if (isNew) {
@@ -400,6 +404,29 @@ export default function BuilderPage() {
                 </div>
               )}
             </>
+          )}
+        </div>
+
+        <div style={styles.field}>
+          <label style={styles.label}>Primary Colour</label>
+          <label style={styles.checkRow}>
+            <input
+              type="checkbox"
+              checked={btnColorEnabled}
+              onChange={e => setBtnColorEnabled(e.target.checked)}
+            />
+            <span style={{ fontSize: '0.875rem' }}>Custom primary colour</span>
+          </label>
+          {btnColorEnabled && (
+            <div style={styles.colorRow}>
+              <input
+                type="color"
+                value={btnColor}
+                onChange={e => setBtnColor(e.target.value)}
+                style={styles.colorPicker}
+              />
+              <span style={styles.colorHex}>{btnColor}</span>
+            </div>
           )}
         </div>
 
