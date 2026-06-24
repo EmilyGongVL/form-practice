@@ -158,6 +158,13 @@ export default function BuilderPage() {
             placeholder: "Enter phone number",
             validate: { required: true },
           },
+          {
+            type: "button",
+            label: "Submit",
+            key: "submit",
+            theme: "primary",
+            disableOnInvalid: true,
+          },
         ],
       });
     }
