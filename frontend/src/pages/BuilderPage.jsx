@@ -607,6 +607,7 @@ export default function BuilderPage() {
                     style={styles.logoPreview}
                   />
                   <button
+                    type="button"
                     style={styles.clearBtn}
                     onClick={() => {
                       setLogoFile(null);
@@ -621,6 +622,7 @@ export default function BuilderPage() {
               <div style={styles.alignRow}>
                 {["left", "center", "right"].map((a) => (
                   <button
+                    type="button"
                     key={a}
                     style={{
                       ...styles.alignBtn,
@@ -661,6 +663,7 @@ export default function BuilderPage() {
                     style={styles.bannerPreview}
                   />
                   <button
+                    type="button"
                     style={styles.clearBtn}
                     onClick={() => {
                       setBannerFile(null);
@@ -717,6 +720,7 @@ export default function BuilderPage() {
                     <div style={styles.previewRow}>
                       <div style={{ ...styles.bgPreview, ...bgPreviewStyle }} />
                       <button
+                        type="button"
                         style={styles.clearBtn}
                         onClick={() => {
                           setBgImageFile(null);
