@@ -1,43 +1,41 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { FormBuilder } from "@formio/react";
+import type { AxiosError } from "axios";
 import api from "../api";
 
-const FORM_TYPES = ["Standard Form", "Leads Signup", "NPS Survey"];
+const FORM_TYPES = ["Standard Form", "Leads Signup", "NPS Survey"] as const;
 
-const schema = z
-  .object({
-    title: z.string().min(1, "Form Name is required"),
-    formType: z.enum(FORM_TYPES),
-    formStatus: z.enum(["live", "paused"]),
-    venueName: z.string(),
-    sourceGroup: z.string().min(1, "Source Group is required"),
-    sourceName: z.string().min(1, "Source Name is required"),
-    assignLeadsTo: z.string(),
-    redirectLink: z.union([
-      z.string().url("Must be a valid URL"),
-      z.literal(""),
-    ]),
-    submissionCopyTo: z.union([
-      z.string().email("Must be a valid email"),
-      z.literal(""),
-    ]),
-    successMessage: z.string(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.formType === "Leads Signup" && !data.venueName.trim()) {
-      ctx.addIssue({
-        path: ["venueName"],
-        code: z.ZodIssueCode.custom,
-        message: "Venue Name is required for Leads Signup forms",
-      });
-    }
-  });
+const schema = z.object({
+  title: z.string().min(1, "Form Name is required"),
+  formType: z.enum(FORM_TYPES),
+  formStatus: z.enum(["live", "paused"] as const),
+  venueName: z.string(),
+  sourceGroup: z.string().min(1, "Source Group is required"),
+  sourceName: z.string().min(1, "Source Name is required"),
+  assignLeadsTo: z.string(),
+  redirectLink: z.union([
+    z.string().url("Must be a valid URL"),
+    z.literal(""),
+  ]),
+  submissionCopyTo: z.union([
+    z.string().email("Must be a valid email"),
+    z.literal(""),
+  ]),
+  successMessage: z.string(),
+});
 
-const DEFAULT_SCHEMA = {
+type FormFields = z.infer<typeof schema>;
+
+interface FormioSchema {
+  components: unknown[];
+  [key: string]: unknown;
+}
+
+const DEFAULT_SCHEMA: FormioSchema = {
   components: [
     {
       type: "textfield",
@@ -271,17 +269,16 @@ const BUILDER_OPTIONS = {
 };
 
 export default function BuilderPage() {
-  const { identifier } = useParams();
+  const { identifier } = useParams<{ identifier: string }>();
   const isNew = identifier === "new";
   const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
-    watch,
     reset,
     formState: { errors },
-  } = useForm({
+  } = useForm<FormFields>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: "",
@@ -297,19 +294,17 @@ export default function BuilderPage() {
     },
   });
 
-  const formType = watch("formType");
-
   // Design settings
-  const [logoFile, setLogoFile] = useState(null);
-  const [logoPreview, setLogoPreview] = useState(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoAlign, setLogoAlign] = useState("left");
   const [removeLogo, setRemoveLogo] = useState(false);
-  const [bannerFile, setBannerFile] = useState(null);
-  const [bannerPreview, setBannerPreview] = useState(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [bgTransparent, setBgTransparent] = useState(false);
   const [bgColor, setBgColor] = useState("#ffffff");
-  const [bgImageFile, setBgImageFile] = useState(null);
-  const [bgImagePreview, setBgImagePreview] = useState(null);
+  const [bgImageFile, setBgImageFile] = useState<File | null>(null);
+  const [bgImagePreview, setBgImagePreview] = useState<string | null>(null);
   const [btnColorEnabled, setBtnColorEnabled] = useState(false);
   const [btnColor, setBtnColor] = useState("#0d6efd");
   const [borderColor, setBorderColor] = useState("#000000");
@@ -321,58 +316,56 @@ export default function BuilderPage() {
   const [serverError, setServerError] = useState("");
 
   // initialSchema drives when FormBuilder (re)mounts; schemaRef tracks live edits
-  const [initialSchema, setInitialSchema] = useState(null);
-  const schemaRef = useRef(null);
+  const [initialSchema, setInitialSchema] = useState<FormioSchema | null>(() =>
+    isNew ? DEFAULT_SCHEMA : null
+  );
+  const schemaRef = useRef<FormioSchema | null>(isNew ? DEFAULT_SCHEMA : null);
 
   useEffect(() => {
-    if (!isNew) {
-      api.get(`/forms/${identifier}`).then(({ data }) => {
-        reset({
-          title: data.title || "",
-          formType: FORM_TYPES.includes(data.formType)
-            ? data.formType
-            : "Standard Form",
-          formStatus: data.formStatus || "live",
-          venueName: data.venueName || "",
-          sourceGroup: data.sourceGroup || "",
-          sourceName: data.sourceName || "",
-          assignLeadsTo: data.assignLeadsTo || "",
-          redirectLink: data.redirectLink || "",
-          submissionCopyTo: data.submissionCopyTo || "",
-          successMessage: data.successMessage || "",
-        });
-        if (data.logoUrl) setLogoPreview(data.logoUrl);
-        if (data.logoAlign) setLogoAlign(data.logoAlign);
-        if (data.bgColor) {
-          setBgColor(data.bgColor);
-        } else if (!data.bgImageUrl) {
-          setBgTransparent(true);
-        }
-        if (data.bgImageUrl) setBgImagePreview(data.bgImageUrl);
-        if (data.borderColor != null) setBorderColor(data.borderColor);
-        if (data.borderWidth != null) setBorderWidth(data.borderWidth);
-        if (data.borderStyle != null) setBorderStyle(data.borderStyle);
-        if (data.borderRadius != null) setBorderRadius(data.borderRadius);
-        if (data.cardShadow != null) setCardShadow(data.cardShadow);
-        if (data.bannerImageUrl) setBannerPreview(data.bannerImageUrl);
-        if (data.btnColor) {
-          setBtnColor(data.btnColor);
-          setBtnColorEnabled(true);
-        }
-        const s = data.schema || { components: [] };
-        schemaRef.current = s;
-        setInitialSchema(s);
+    if (isNew) return;
+    api.get(`/forms/${identifier}`).then(({ data }) => {
+      reset({
+        title: data.title || "",
+        formType: (FORM_TYPES as readonly string[]).includes(data.formType)
+          ? data.formType
+          : "Standard Form",
+        formStatus: data.formStatus || "live",
+        venueName: data.venueName || "",
+        sourceGroup: data.sourceGroup || "",
+        sourceName: data.sourceName || "",
+        assignLeadsTo: data.assignLeadsTo || "",
+        redirectLink: data.redirectLink || "",
+        submissionCopyTo: data.submissionCopyTo || "",
+        successMessage: data.successMessage || "",
       });
-    } else {
-      schemaRef.current = DEFAULT_SCHEMA;
-      setInitialSchema(DEFAULT_SCHEMA);
-    }
-  }, [identifier]);
+      if (data.logoUrl) setLogoPreview(data.logoUrl);
+      if (data.logoAlign) setLogoAlign(data.logoAlign);
+      if (data.bgColor) {
+        setBgColor(data.bgColor);
+      } else if (!data.bgImageUrl) {
+        setBgTransparent(true);
+      }
+      if (data.bgImageUrl) setBgImagePreview(data.bgImageUrl);
+      if (data.borderColor != null) setBorderColor(data.borderColor);
+      if (data.borderWidth != null) setBorderWidth(data.borderWidth);
+      if (data.borderStyle != null) setBorderStyle(data.borderStyle);
+      if (data.borderRadius != null) setBorderRadius(data.borderRadius);
+      if (data.cardShadow != null) setCardShadow(data.cardShadow);
+      if (data.bannerImageUrl) setBannerPreview(data.bannerImageUrl);
+      if (data.btnColor) {
+        setBtnColor(data.btnColor);
+        setBtnColorEnabled(true);
+      }
+      const s: FormioSchema = data.schema || { components: [] };
+      schemaRef.current = s;
+      setInitialSchema(s);
+    });
+  }, [identifier, isNew, reset]);
 
   // Intercept form.io help links and redirect to /help
   useEffect(() => {
-    const interceptHelp = (e) => {
-      const link = e.target.closest(
+    const interceptHelp = (e: MouseEvent) => {
+      const link = (e.target as Element).closest(
         'a[href*="help.form.io"], a[href*="form.io/developers"]',
       );
       if (link) {
@@ -385,56 +378,69 @@ export default function BuilderPage() {
     return () => document.removeEventListener("click", interceptHelp, true);
   }, []);
 
-  async function handleSave(fields) {
-    setServerError("");
+  const handleSave = useCallback(
+    async (fields: FormFields) => {
+      setServerError("");
 
-    const formData = new FormData();
-    formData.append("title", fields.title);
-    formData.append("formType", fields.formType);
-    formData.append("formStatus", fields.formStatus);
-    formData.append("venueName", fields.venueName);
-    formData.append("sourceGroup", fields.sourceGroup);
-    formData.append("sourceName", fields.sourceName);
-    formData.append("assignLeadsTo", fields.assignLeadsTo);
-    formData.append("redirectLink", fields.redirectLink);
-    formData.append("submissionCopyTo", fields.submissionCopyTo);
-    formData.append("successMessage", fields.successMessage);
-    formData.append(
-      "schema",
-      JSON.stringify(schemaRef.current ?? initialSchema ?? { components: [] }),
-    );
-    if (bgTransparent) {
-      formData.append("bgColor", "");
-      formData.append("removeBgImage", "true");
-    } else {
-      formData.append("bgColor", bgColor);
-      if (bgImageFile) formData.append("bgImage", bgImageFile);
-    }
-    if (logoFile) formData.append("logo", logoFile);
-    if (removeLogo) formData.append("removeLogo", "true");
-    formData.append("logoAlign", logoAlign);
-    if (bannerFile) formData.append("banner", bannerFile);
-    if (!bannerPreview && !bannerFile) formData.append("removeBanner", "true");
-    formData.append("borderColor", borderColor);
-    formData.append("borderWidth", borderWidth);
-    formData.append("borderStyle", borderStyle);
-    formData.append("borderRadius", borderRadius);
-    formData.append("cardShadow", cardShadow);
-    formData.append("btnColor", btnColorEnabled ? btnColor : "");
-
-    try {
-      if (isNew) {
-        await api.post("/forms", formData);
+      const formData = new FormData();
+      formData.append("title", fields.title);
+      formData.append("formType", fields.formType);
+      formData.append("formStatus", fields.formStatus);
+      formData.append("venueName", fields.venueName);
+      formData.append("sourceGroup", fields.sourceGroup);
+      formData.append("sourceName", fields.sourceName);
+      formData.append("assignLeadsTo", fields.assignLeadsTo);
+      formData.append("redirectLink", fields.redirectLink);
+      formData.append("submissionCopyTo", fields.submissionCopyTo);
+      formData.append("successMessage", fields.successMessage);
+      formData.append(
+        "schema",
+        JSON.stringify(schemaRef.current ?? { components: [] }),
+      );
+      if (bgTransparent) {
+        formData.append("bgColor", "");
+        formData.append("removeBgImage", "true");
       } else {
-        await api.patch(`/forms/${identifier}`, formData);
+        formData.append("bgColor", bgColor);
+        if (bgImageFile) formData.append("bgImage", bgImageFile);
       }
-      navigate("/");
-    } catch (err) {
-      setServerError(err.response?.data?.error || "Save failed");
-    }
-  }
+      if (logoFile) formData.append("logo", logoFile);
+      if (removeLogo) formData.append("removeLogo", "true");
+      formData.append("logoAlign", logoAlign);
+      if (bannerFile) formData.append("banner", bannerFile);
+      if (!bannerPreview && !bannerFile) formData.append("removeBanner", "true");
+      formData.append("borderColor", borderColor);
+      formData.append("borderWidth", String(borderWidth));
+      formData.append("borderStyle", borderStyle);
+      formData.append("borderRadius", String(borderRadius));
+      formData.append("cardShadow", cardShadow);
+      formData.append("btnColor", btnColorEnabled ? btnColor : "");
 
-  const bgPreviewStyle = bgImagePreview
+      try {
+        if (isNew) {
+          await api.post("/forms", formData);
+        } else {
+          await api.patch(`/forms/${identifier}`, formData);
+        }
+        navigate("/");
+      } catch (err) {
+        const e = err as AxiosError<{ error: string }>;
+        setServerError(e.response?.data?.error ?? "Save failed");
+      }
+    },
+    [
+      isNew, identifier, navigate,
+      bgTransparent, bgColor, bgImageFile,
+      logoFile, removeLogo, logoAlign,
+      bannerFile, bannerPreview,
+      btnColorEnabled, btnColor,
+      borderColor, borderWidth, borderStyle, borderRadius, cardShadow,
+    ],
+  );
+
+  const onSubmit = handleSubmit(handleSave);
+
+  const bgPreviewStyle: React.CSSProperties = bgImagePreview
     ? {
         backgroundImage: `url(${bgImagePreview})`,
         backgroundSize: "cover",
@@ -444,7 +450,7 @@ export default function BuilderPage() {
 
   return (
     <div style={styles.page}>
-      <form onSubmit={handleSubmit(handleSave)}>
+      <form onSubmit={onSubmit}>
         <div style={styles.toolbar}>
           <button
             type="button"
@@ -494,21 +500,14 @@ export default function BuilderPage() {
               </select>
             </div>
 
-            {formType === "Leads Signup" && (
-              <div style={styles.field}>
-                <label style={styles.label}>
-                  Venue Name <span style={styles.required}>*</span>
-                </label>
-                <input
-                  style={styles.input}
-                  placeholder="Enter venue name..."
-                  {...register("venueName")}
-                />
-                {errors.venueName && (
-                  <p style={styles.fieldError}>{errors.venueName.message}</p>
-                )}
-              </div>
-            )}
+            <div style={styles.field}>
+              <label style={styles.label}>Venue Name</label>
+              <input
+                style={styles.input}
+                placeholder="Enter venue name..."
+                {...register("venueName")}
+              />
+            </div>
 
             <div style={styles.field}>
               <label style={styles.label}>
@@ -597,7 +596,7 @@ export default function BuilderPage() {
                 type="file"
                 accept="image/*"
                 onChange={(e) => {
-                  const file = e.target.files[0];
+                  const file = e.target.files?.[0];
                   if (!file) return;
                   setLogoFile(file);
                   setLogoPreview(URL.createObjectURL(file));
@@ -654,7 +653,7 @@ export default function BuilderPage() {
                 type="file"
                 accept="image/*"
                 onChange={(e) => {
-                  const file = e.target.files[0];
+                  const file = e.target.files?.[0];
                   if (!file) return;
                   setBannerFile(file);
                   setBannerPreview(URL.createObjectURL(file));
@@ -715,7 +714,7 @@ export default function BuilderPage() {
                     type="file"
                     accept="image/*"
                     onChange={(e) => {
-                      const file = e.target.files[0];
+                      const file = e.target.files?.[0];
                       if (!file) return;
                       setBgImageFile(file);
                       setBgImagePreview(URL.createObjectURL(file));
@@ -841,13 +840,12 @@ export default function BuilderPage() {
                       ? `${borderWidth}px ${borderStyle} ${borderColor}`
                       : "1px solid #e5e7eb",
                   background: "#fff",
-                  boxShadow:
-                    {
-                      none: "none",
-                      sm: "0 1px 4px rgba(0,0,0,0.06)",
-                      md: "0 2px 12px rgba(0,0,0,0.08)",
-                      lg: "0 4px 24px rgba(0,0,0,0.18)",
-                    }[cardShadow] ?? "none",
+                  boxShadow: ({
+                    none: "none",
+                    sm: "0 1px 4px rgba(0,0,0,0.06)",
+                    md: "0 2px 12px rgba(0,0,0,0.08)",
+                    lg: "0 4px 24px rgba(0,0,0,0.18)",
+                  } as Record<string, string>)[cardShadow] ?? "none",
                 }}
               />
             </div>
@@ -859,8 +857,8 @@ export default function BuilderPage() {
             <FormBuilder
               form={initialSchema}
               options={BUILDER_OPTIONS}
-              onChange={(updatedSchema) => {
-                schemaRef.current = updatedSchema;
+              onChange={(updatedSchema: unknown) => {
+                schemaRef.current = updatedSchema as FormioSchema;
               }}
             />
           )}
@@ -879,7 +877,7 @@ export default function BuilderPage() {
   );
 }
 
-const styles = {
+const styles: Record<string, React.CSSProperties> = {
   page: { maxWidth: "1400px", margin: "0 auto", padding: "1.5rem" },
   toolbar: {
     display: "flex",

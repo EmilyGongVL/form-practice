@@ -200,7 +200,7 @@ export default function HelpPage() {
               {[
                 ['Property Name', 'The unique key used for this field in the JSON submission object (e.g. "firstName"). Must be unique within the form.'],
                 ['Custom Properties', 'Arbitrary key-value pairs attached to the component schema — useful for passing metadata to custom code or integrations.'],
-                ['Expose to Template', 'Makes this field\'s value available as a variable when rendering other fields\' templates or calculated values.'],
+                ['Expose to Template', "Makes this field's value available as a variable when rendering other fields' templates or calculated values."],
               ].map(([name, desc]) => (
                 <tr key={name}><td style={s.td}><strong>{name}</strong></td><td style={s.td}>{desc}</td></tr>
               ))}
@@ -244,9 +244,9 @@ export default function HelpPage() {
                 ['Trigger — Event', 'Fires on a named event emitted by the form (e.g. a custom event dispatched in other logic).'],
                 ['Trigger — Javascript', 'Fires when a JavaScript expression returns true. Access field values via the "data" object.'],
                 ['Trigger — JSON Logic', 'Fires when a JSON Logic rule evaluates to true — a code-free alternative to JavaScript.'],
-                ['Action — Value', 'Sets this field\'s value to a static string or a calculated expression when the trigger fires.'],
+                ["Action — Value", "Sets this field's value to a static string or a calculated expression when the trigger fires."],
                 ['Action — Property', 'Changes a component property (e.g. disabled, hidden, required) when the trigger fires.'],
-                ['Action — Merge Component Schema', 'Merges a partial JSON schema into this component\'s definition, overriding specific settings.'],
+                ["Action — Merge Component Schema", "Merges a partial JSON schema into this component's definition, overriding specific settings."],
                 ['Action — Custom Action', 'Runs arbitrary JavaScript when the trigger fires. Use "component", "instance", and "value" variables.'],
               ].map(([name, desc]) => (
                 <tr key={name}><td style={s.td}><strong>{name}</strong></td><td style={s.td}>{desc}</td></tr>
@@ -281,7 +281,7 @@ export default function HelpPage() {
   );
 }
 
-const s = {
+const s: Record<string, React.CSSProperties> = {
   page: { display: 'flex', minHeight: '100vh', background: '#f9fafb', fontFamily: 'system-ui, sans-serif' },
   nav: { width: '220px', flexShrink: 0, background: '#fff', borderRight: '1px solid #e5e7eb', padding: '2rem 1rem', position: 'sticky', top: 0, height: '100vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.25rem' },
   navTitle: { fontWeight: 700, fontSize: '1rem', color: '#111', margin: '0 0 0.75rem' },

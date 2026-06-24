@@ -2,22 +2,33 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
 
+interface Lead {
+  id: string;
+  createdAt: string;
+  data: Record<string, unknown>;
+}
+
+interface SubmissionsResponse {
+  title: string;
+  leads: Lead[];
+}
+
 export default function SubmissionsPage() {
   const { identifier } = useParams();
   const navigate = useNavigate();
-  const [data, setData] = useState(null);
+  const [submissions, setSubmissions] = useState<SubmissionsResponse | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api.get(`/forms/${identifier}/submissions`)
-      .then(({ data }) => setData(data))
+    api.get<SubmissionsResponse>(`/forms/${identifier}/submissions`)
+      .then(({ data }) => setSubmissions(data))
       .catch(() => setError('Could not load submissions.'));
   }, [identifier]);
 
   if (error) return <div style={s.center}><p style={{ color: '#dc2626' }}>{error}</p></div>;
-  if (!data) return <div style={s.center}><p>Loading...</p></div>;
+  if (!submissions) return <div style={s.center}><p>Loading...</p></div>;
 
-  const { title, leads } = data;
+  const { title, leads } = submissions;
   const allKeys = leads.length > 0
     ? [...new Set(leads.flatMap(l => Object.keys(l.data)))]
     : [];
@@ -62,7 +73,7 @@ export default function SubmissionsPage() {
   );
 }
 
-const s = {
+const s: Record<string, React.CSSProperties> = {
   page: { maxWidth: '1100px', margin: '0 auto', padding: '2rem' },
   header: { display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' },
   backBtn: { padding: '0.4rem 0.8rem', background: 'none', border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer' },

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import type { AxiosError } from 'axios';
 import api from '../api';
 
 const schema = z.object({
@@ -10,24 +11,27 @@ const schema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
+type LoginFields = z.infer<typeof schema>;
+
 export default function Login() {
-  const [mode, setMode] = useState('login');
+  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [serverError, setServerError] = useState('');
   const navigate = useNavigate();
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFields>({
     resolver: zodResolver(schema),
   });
 
-  async function onSubmit({ email, password }) {
+  async function onSubmit({ email, password }: LoginFields) {
     setServerError('');
     try {
       const endpoint = mode === 'login' ? '/auth/login' : '/auth/register';
-      const { data } = await api.post(endpoint, { email, password });
+      const { data } = await api.post<{ token: string }>(endpoint, { email, password });
       localStorage.setItem('token', data.token);
       navigate('/');
     } catch (err) {
-      setServerError(err.response?.data?.error || 'Something went wrong');
+      const e = err as AxiosError<{ error: string }>;
+      setServerError(e.response?.data?.error ?? 'Something went wrong');
     }
   }
 
@@ -58,7 +62,7 @@ export default function Login() {
   );
 }
 
-const styles = {
+const styles: Record<string, React.CSSProperties> = {
   container: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5' },
   card: { background: '#fff', padding: '2rem', borderRadius: '8px', boxShadow: '0 2px 12px rgba(0,0,0,0.1)', width: '360px' },
   title: { textAlign: 'center', marginBottom: '1.5rem', fontSize: '1.5rem', fontWeight: 700 },

@@ -1,8 +1,45 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import type { AxiosError } from 'axios';
 import api from '../api';
 
-function Toast({ message, onHide }) {
+interface FormItem {
+  id: string;
+  title: string;
+  identifier: string;
+  formType: string;
+  formStatus: string;
+  createdAt: string;
+  _count: { leads: number };
+}
+
+interface ToastProps {
+  message: string;
+  onHide: () => void;
+}
+
+interface EmbedModalProps {
+  form: FormItem;
+  onClose: () => void;
+}
+
+interface ActionButtonProps {
+  icon: string;
+  tooltip: string;
+  onClick: () => void;
+  danger?: boolean;
+}
+
+type ActionType = 'edit' | 'view' | 'submissions' | 'duplicate' | 'copy' | 'embed' | 'delete';
+
+interface ActionDef {
+  action: ActionType;
+  icon: string;
+  tooltip: string;
+  danger?: boolean;
+}
+
+function Toast({ message, onHide }: ToastProps) {
   useEffect(() => {
     const t = setTimeout(onHide, 3000);
     return () => clearTimeout(t);
@@ -10,7 +47,7 @@ function Toast({ message, onHide }) {
   return <div style={s.toast}>{message}</div>;
 }
 
-function EmbedModal({ form, onClose }) {
+function EmbedModal({ form, onClose }: EmbedModalProps) {
   const origin = window.location.origin;
   const code = `<iframe style="width: 100%; min-height: 500px; height: auto; border: none;" scrolling="auto" allowtransparency="true" allowfullscreen="true" src="${origin}/form/${form.identifier}"></iframe>`;
   const [copied, setCopied] = useState(false);
@@ -44,7 +81,7 @@ function EmbedModal({ form, onClose }) {
   );
 }
 
-function ActionButton({ icon, tooltip, onClick, danger }) {
+function ActionButton({ icon, tooltip, onClick, danger }: ActionButtonProps) {
   const [hovered, setHovered] = useState(false);
   return (
     <div style={{ position: 'relative', display: 'inline-block' }}>
@@ -66,18 +103,19 @@ function ActionButton({ icon, tooltip, onClick, danger }) {
 }
 
 export default function FormList() {
-  const [forms, setForms] = useState([]);
+  const [forms, setForms] = useState<FormItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState(null);
-  const [embedForm, setEmbedForm] = useState(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [embedForm, setEmbedForm] = useState<FormItem | null>(null);
   const navigate = useNavigate();
 
   async function loadForms() {
     try {
-      const { data } = await api.get('/forms');
+      const { data } = await api.get<FormItem[]>('/forms');
       setForms(data);
     } catch (err) {
-      if (err.response?.status === 401) {
+      const e = err as AxiosError;
+      if (e.response?.status === 401) {
         localStorage.removeItem('token');
         navigate('/login');
       }
@@ -88,7 +126,7 @@ export default function FormList() {
 
   useEffect(() => { loadForms(); }, []);
 
-  async function handleAction(action, form) {
+  async function handleAction(action: ActionType, form: FormItem) {
     switch (action) {
       case 'edit':
         navigate(`/builder/${form.identifier}`);
@@ -125,7 +163,7 @@ export default function FormList() {
     navigate('/login');
   }
 
-  const actions = [
+  const actions: ActionDef[] = [
     { action: 'edit',        icon: 'fa-pencil',    tooltip: 'Edit Form' },
     { action: 'view',        icon: 'fa-eye',       tooltip: 'View Form' },
     { action: 'submissions', icon: 'fa-list',      tooltip: 'View Submissions' },
@@ -196,7 +234,7 @@ export default function FormList() {
   );
 }
 
-const s = {
+const s: Record<string, React.CSSProperties> = {
   page: { maxWidth: '1200px', margin: '0 auto', padding: '2rem' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' },
   heading: { fontSize: '1.75rem', fontWeight: 700, margin: 0 },
