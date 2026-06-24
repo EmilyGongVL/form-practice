@@ -287,6 +287,7 @@ export default function BuilderPage() {
             },
           },
         },
+        basic: { default: false },
       },
       editForm: {
         textfield: [
