@@ -450,14 +450,14 @@ export default function BuilderPage() {
           </div>
 
           <div style={styles.field}>
-            <label style={styles.label}>Primary Colour</label>
+            <label style={styles.label}>Submit Button Colour</label>
             <label style={styles.checkRow}>
               <input
                 type="checkbox"
                 checked={btnColorEnabled}
                 onChange={(e) => setBtnColorEnabled(e.target.checked)}
               />
-              <span style={{ fontSize: "0.875rem" }}>Custom primary colour</span>
+              <span style={{ fontSize: "0.875rem" }}>Custom button colour</span>
             </label>
             {btnColorEnabled && (
               <div style={styles.colorRow}>
@@ -470,6 +470,7 @@ export default function BuilderPage() {
                 <span style={styles.colorHex}>{btnColor}</span>
               </div>
             )}
+            <span style={styles.hint}>Overrides the default blue on the form's submit button.</span>
           </div>
 
           <div style={styles.field}>
