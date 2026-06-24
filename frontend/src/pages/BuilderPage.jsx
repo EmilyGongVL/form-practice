@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { FormBuilder } from "@formio/react";
 import api from "../api";
 
 const FORM_TYPES = ["Standard Form", "Leads Signup", "NPS Survey"];
@@ -35,6 +36,239 @@ const schema = z
       });
     }
   });
+
+const DEFAULT_SCHEMA = {
+  components: [
+    {
+      type: "textfield",
+      label: "First Name",
+      key: "firstName",
+      placeholder: "Enter first name",
+      validate: { required: true },
+    },
+    {
+      type: "textfield",
+      label: "Last Name",
+      key: "lastName",
+      placeholder: "Enter last name",
+      validate: { required: true },
+    },
+    {
+      type: "email",
+      label: "Email",
+      key: "email",
+      placeholder: "Enter email address",
+      validate: { required: true },
+    },
+    {
+      type: "phoneNumber",
+      label: "Phone Number",
+      key: "phone",
+      placeholder: "Enter phone number",
+      validate: { required: true },
+    },
+    {
+      type: "button",
+      label: "Submit",
+      key: "submit",
+      theme: "primary",
+      disableOnInvalid: true,
+    },
+  ],
+};
+
+const BUILDER_OPTIONS = {
+  builder: {
+    predefined: {
+      title: "Predefined Fields",
+      weight: 0,
+      default: true,
+      components: {
+        firstName: {
+          title: "First Name",
+          key: "firstName",
+          icon: "terminal",
+          schema: {
+            type: "textfield",
+            label: "First Name",
+            key: "firstName",
+            placeholder: "Enter first name",
+            validate: { required: true },
+          },
+        },
+        lastName: {
+          title: "Last Name",
+          key: "lastName",
+          icon: "terminal",
+          schema: {
+            type: "textfield",
+            label: "Last Name",
+            key: "lastName",
+            placeholder: "Enter last name",
+            validate: { required: true },
+          },
+        },
+        email: {
+          title: "Email",
+          key: "email",
+          icon: "at",
+          schema: {
+            type: "email",
+            label: "Email",
+            key: "email",
+            placeholder: "Enter email address",
+            validate: { required: true },
+          },
+        },
+        phone: {
+          title: "Phone",
+          key: "phone",
+          icon: "phone-square",
+          schema: {
+            type: "phoneNumber",
+            label: "Phone Number",
+            key: "phone",
+            placeholder: "Enter phone number",
+          },
+        },
+        gender: {
+          title: "Gender",
+          key: "gender",
+          icon: "list",
+          schema: {
+            type: "select",
+            label: "Gender",
+            key: "gender",
+            placeholder: "Select gender",
+            data: {
+              values: [
+                { label: "Male", value: "male" },
+                { label: "Female", value: "female" },
+                { label: "Non-binary", value: "non-binary" },
+                { label: "Prefer not to say", value: "prefer_not_to_say" },
+              ],
+            },
+          },
+        },
+        dateOfBirth: {
+          title: "Date of Birth",
+          key: "dateOfBirth",
+          icon: "calendar",
+          schema: {
+            type: "datetime",
+            label: "Date of Birth",
+            key: "dateOfBirth",
+            format: "dd/MM/yyyy",
+            enableTime: false,
+            datePicker: { disableWeekends: false, disableWeekdays: false },
+          },
+        },
+        waiver: {
+          title: "Waiver",
+          key: "waiver",
+          icon: "file-text",
+          schema: {
+            type: "checkbox",
+            label: "I agree to the terms and conditions",
+            key: "waiver",
+            validate: { required: true },
+          },
+        },
+      },
+    },
+    basic: { default: false },
+  },
+  editForm: {
+    textfield: [
+      {
+        key: "display",
+        components: [
+          { key: "prefix", ignore: false },
+          { key: "suffix", ignore: false },
+          { key: "widget", ignore: false },
+        ],
+      },
+      { key: "data", ignore: false },
+      { key: "api", ignore: false },
+      { key: "conditional", ignore: false },
+      { key: "logic", ignore: false },
+      { key: "layout", ignore: false },
+    ],
+    textarea: [
+      { key: "data", ignore: false },
+      { key: "api", ignore: false },
+      { key: "conditional", ignore: false },
+      { key: "logic", ignore: false },
+      { key: "layout", ignore: false },
+    ],
+    email: [
+      {
+        key: "display",
+        components: [
+          { key: "prefix", ignore: false },
+          { key: "suffix", ignore: false },
+          { key: "widget", ignore: false },
+        ],
+      },
+      { key: "data", ignore: false },
+      { key: "api", ignore: false },
+      { key: "conditional", ignore: false },
+      { key: "logic", ignore: false },
+      { key: "layout", ignore: false },
+    ],
+    phoneNumber: [
+      {
+        key: "display",
+        components: [
+          { key: "prefix", ignore: false },
+          { key: "suffix", ignore: false },
+          { key: "widget", ignore: false },
+        ],
+      },
+      { key: "data", ignore: false },
+      { key: "api", ignore: false },
+      { key: "conditional", ignore: false },
+      { key: "logic", ignore: false },
+      { key: "layout", ignore: false },
+    ],
+    number: [
+      {
+        key: "display",
+        components: [
+          { key: "prefix", ignore: false },
+          { key: "suffix", ignore: false },
+          { key: "widget", ignore: false },
+        ],
+      },
+      { key: "data", ignore: false },
+      { key: "api", ignore: false },
+      { key: "conditional", ignore: false },
+      { key: "logic", ignore: false },
+      { key: "layout", ignore: false },
+    ],
+    select: [
+      { key: "data", ignore: false },
+      { key: "api", ignore: false },
+      { key: "conditional", ignore: false },
+      { key: "logic", ignore: false },
+      { key: "layout", ignore: false },
+    ],
+    checkbox: [
+      { key: "data", ignore: false },
+      { key: "api", ignore: false },
+      { key: "conditional", ignore: false },
+      { key: "logic", ignore: false },
+      { key: "layout", ignore: false },
+    ],
+    radio: [
+      { key: "data", ignore: false },
+      { key: "api", ignore: false },
+      { key: "conditional", ignore: false },
+      { key: "logic", ignore: false },
+      { key: "layout", ignore: false },
+    ],
+  },
+};
 
 export default function BuilderPage() {
   const { identifier } = useParams();
@@ -85,9 +319,10 @@ export default function BuilderPage() {
   const [cardShadow, setCardShadow] = useState("md");
 
   const [serverError, setServerError] = useState("");
-  const builderRef = useRef(null);
-  const builderInstanceRef = useRef(null);
-  const initialSchemaRef = useRef({ components: [] });
+
+  // initialSchema drives when FormBuilder (re)mounts; schemaRef tracks live edits
+  const [initialSchema, setInitialSchema] = useState(null);
+  const schemaRef = useRef(null);
 
   useEffect(() => {
     if (!isNew) {
@@ -124,267 +359,34 @@ export default function BuilderPage() {
           setBtnColor(data.btnColor);
           setBtnColorEnabled(true);
         }
-        initialSchemaRef.current = data.schema;
-        mountBuilder(data.schema);
+        const s = data.schema || { components: [] };
+        schemaRef.current = s;
+        setInitialSchema(s);
       });
     } else {
-      mountBuilder({
-        components: [
-          {
-            type: "textfield",
-            label: "First Name",
-            key: "firstName",
-            placeholder: "Enter first name",
-            validate: { required: true },
-          },
-          {
-            type: "textfield",
-            label: "Last Name",
-            key: "lastName",
-            placeholder: "Enter last name",
-            validate: { required: true },
-          },
-          {
-            type: "email",
-            label: "Email",
-            key: "email",
-            placeholder: "Enter email address",
-            validate: { required: true },
-          },
-          {
-            type: "phoneNumber",
-            label: "Phone Number",
-            key: "phone",
-            placeholder: "Enter phone number",
-            validate: { required: true },
-          },
-          {
-            type: "button",
-            label: "Submit",
-            key: "submit",
-            theme: "primary",
-            disableOnInvalid: true,
-          },
-        ],
-      });
+      schemaRef.current = DEFAULT_SCHEMA;
+      setInitialSchema(DEFAULT_SCHEMA);
     }
-
-    return () => {
-      if (builderInstanceRef.current) {
-        if (builderInstanceRef.current._helpInterceptor) {
-          document.removeEventListener(
-            "click",
-            builderInstanceRef.current._helpInterceptor,
-            true,
-          );
-        }
-        builderInstanceRef.current.destroy();
-        builderInstanceRef.current = null;
-      }
-    };
   }, [identifier]);
 
-  function mountBuilder(schema) {
-    if (!builderRef.current) return;
-    const hiddenTabs = { ignore: false };
-    const hiddenDisplayFields = {
-      key: "display",
-      components: [
-        { key: "prefix", ignore: false },
-        { key: "suffix", ignore: false },
-        { key: "widget", ignore: false },
-      ],
+  // Intercept form.io help links and redirect to /help
+  useEffect(() => {
+    const interceptHelp = (e) => {
+      const link = e.target.closest(
+        'a[href*="help.form.io"], a[href*="form.io/developers"]',
+      );
+      if (link) {
+        e.preventDefault();
+        e.stopPropagation();
+        window.open("/help", "_blank");
+      }
     };
-    const options = {
-      builder: {
-        predefined: {
-          title: "Predefined Fields",
-          weight: 0,
-          default: true,
-          components: {
-            firstName: {
-              title: "First Name",
-              key: "firstName",
-              icon: "terminal",
-              schema: {
-                type: "textfield",
-                label: "First Name",
-                key: "firstName",
-                placeholder: "Enter first name",
-                validate: { required: true },
-              },
-            },
-            lastName: {
-              title: "Last Name",
-              key: "lastName",
-              icon: "terminal",
-              schema: {
-                type: "textfield",
-                label: "Last Name",
-                key: "lastName",
-                placeholder: "Enter last name",
-                validate: { required: true },
-              },
-            },
-            email: {
-              title: "Email",
-              key: "email",
-              icon: "at",
-              schema: {
-                type: "email",
-                label: "Email",
-                key: "email",
-                placeholder: "Enter email address",
-                validate: { required: true },
-              },
-            },
-            phone: {
-              title: "Phone",
-              key: "phone",
-              icon: "phone-square",
-              schema: {
-                type: "phoneNumber",
-                label: "Phone Number",
-                key: "phone",
-                placeholder: "Enter phone number",
-              },
-            },
-            gender: {
-              title: "Gender",
-              key: "gender",
-              icon: "list",
-              schema: {
-                type: "select",
-                label: "Gender",
-                key: "gender",
-                placeholder: "Select gender",
-                data: {
-                  values: [
-                    { label: "Male", value: "male" },
-                    { label: "Female", value: "female" },
-                    { label: "Non-binary", value: "non-binary" },
-                    { label: "Prefer not to say", value: "prefer_not_to_say" },
-                  ],
-                },
-              },
-            },
-            dateOfBirth: {
-              title: "Date of Birth",
-              key: "dateOfBirth",
-              icon: "calendar",
-              schema: {
-                type: "datetime",
-                label: "Date of Birth",
-                key: "dateOfBirth",
-                format: "dd/MM/yyyy",
-                enableTime: false,
-                datePicker: { disableWeekends: false, disableWeekdays: false },
-              },
-            },
-            waiver: {
-              title: "Waiver",
-              key: "waiver",
-              icon: "file-text",
-              schema: {
-                type: "checkbox",
-                label: "I agree to the terms and conditions",
-                key: "waiver",
-                validate: { required: true },
-              },
-            },
-          },
-        },
-        basic: { default: false },
-      },
-      editForm: {
-        textfield: [
-          hiddenDisplayFields,
-          { key: "data", ...hiddenTabs },
-          { key: "api", ...hiddenTabs },
-          { key: "conditional", ...hiddenTabs },
-          { key: "logic", ...hiddenTabs },
-          { key: "layout", ...hiddenTabs },
-        ],
-        textarea: [
-          { key: "data", ...hiddenTabs },
-          { key: "api", ...hiddenTabs },
-          { key: "conditional", ...hiddenTabs },
-          { key: "logic", ...hiddenTabs },
-          { key: "layout", ...hiddenTabs },
-        ],
-        email: [
-          hiddenDisplayFields,
-          { key: "data", ...hiddenTabs },
-          { key: "api", ...hiddenTabs },
-          { key: "conditional", ...hiddenTabs },
-          { key: "logic", ...hiddenTabs },
-          { key: "layout", ...hiddenTabs },
-        ],
-        phoneNumber: [
-          hiddenDisplayFields,
-          { key: "data", ...hiddenTabs },
-          { key: "api", ...hiddenTabs },
-          { key: "conditional", ...hiddenTabs },
-          { key: "logic", ...hiddenTabs },
-          { key: "layout", ...hiddenTabs },
-        ],
-        number: [
-          hiddenDisplayFields,
-          { key: "data", ...hiddenTabs },
-          { key: "api", ...hiddenTabs },
-          { key: "conditional", ...hiddenTabs },
-          { key: "logic", ...hiddenTabs },
-          { key: "layout", ...hiddenTabs },
-        ],
-        select: [
-          { key: "data", ignore: false },
-          { key: "api", ...hiddenTabs },
-          { key: "conditional", ...hiddenTabs },
-          { key: "logic", ...hiddenTabs },
-          { key: "layout", ...hiddenTabs },
-        ],
-        checkbox: [
-          { key: "data", ...hiddenTabs },
-          { key: "api", ...hiddenTabs },
-          { key: "conditional", ...hiddenTabs },
-          { key: "logic", ...hiddenTabs },
-          { key: "layout", ...hiddenTabs },
-        ],
-        radio: [
-          { key: "data", ignore: false },
-          { key: "api", ...hiddenTabs },
-          { key: "conditional", ...hiddenTabs },
-          { key: "logic", ...hiddenTabs },
-          { key: "layout", ...hiddenTabs },
-        ],
-      },
-    };
-
-    window.Formio.builder(builderRef.current, schema, options).then(
-      (builder) => {
-        builderInstanceRef.current = builder;
-        const interceptHelp = (e) => {
-          const link = e.target.closest(
-            'a[href*="help.form.io"], a[href*="form.io/developers"]',
-          );
-          if (link) {
-            e.preventDefault();
-            e.stopPropagation();
-            window.open("/help", "_blank");
-          }
-        };
-        document.addEventListener("click", interceptHelp, true);
-        builder._helpInterceptor = interceptHelp;
-      },
-    );
-  }
+    document.addEventListener("click", interceptHelp, true);
+    return () => document.removeEventListener("click", interceptHelp, true);
+  }, []);
 
   async function handleSave(fields) {
     setServerError("");
-
-    const builderSchema = builderInstanceRef.current
-      ? builderInstanceRef.current.schema
-      : initialSchemaRef.current;
 
     const formData = new FormData();
     formData.append("title", fields.title);
@@ -397,7 +399,10 @@ export default function BuilderPage() {
     formData.append("redirectLink", fields.redirectLink);
     formData.append("submissionCopyTo", fields.submissionCopyTo);
     formData.append("successMessage", fields.successMessage);
-    formData.append("schema", JSON.stringify(builderSchema));
+    formData.append(
+      "schema",
+      JSON.stringify(schemaRef.current ?? initialSchema ?? { components: [] }),
+    );
     if (bgTransparent) {
       formData.append("bgColor", "");
       formData.append("removeBgImage", "true");
@@ -850,7 +855,15 @@ export default function BuilderPage() {
         </div>
 
         <div style={styles.builderWrap}>
-          <div ref={builderRef} />
+          {initialSchema && (
+            <FormBuilder
+              form={initialSchema}
+              options={BUILDER_OPTIONS}
+              onChange={(updatedSchema) => {
+                schemaRef.current = updatedSchema;
+              }}
+            />
+          )}
         </div>
 
         <div style={styles.saveRow}>
@@ -975,25 +988,6 @@ const styles = {
   },
   error: { color: "#dc2626", marginBottom: "1rem", fontWeight: 500 },
   fieldError: { color: "#dc2626", fontSize: "0.8rem", margin: "0.2rem 0 0 0" },
-  successBanner: {
-    background: "#d1fae5",
-    border: "1px solid #6ee7b7",
-    borderRadius: "6px",
-    padding: "0.75rem 1rem",
-    display: "flex",
-    alignItems: "center",
-    gap: "1rem",
-    marginBottom: "1.5rem",
-    flexWrap: "wrap",
-  },
-  copyBtn: {
-    padding: "0.3rem 0.8rem",
-    background: "#059669",
-    color: "#fff",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-  },
   alignRow: { display: "flex", gap: "0.4rem", marginTop: "0.25rem" },
   alignBtn: {
     padding: "0.25rem 0.6rem",

@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { Form } from '@formio/react';
 import axios from 'axios';
 
 const SHADOWS = {
@@ -16,8 +17,6 @@ export default function PublicForm() {
   const [formData, setFormData] = useState(null);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
-  const formRef = useRef(null);
-  const formInstanceRef = useRef(null);
 
   useEffect(() => {
     if (inIframe) {
@@ -33,28 +32,14 @@ export default function PublicForm() {
       .catch(() => setError('Form not found.'));
   }, [identifier]);
 
-  useEffect(() => {
-    if (!formData || !formRef.current) return;
-
-    window.Formio.createForm(formRef.current, formData.schema).then((form) => {
-      formInstanceRef.current = form;
-      form.on('submit', async (submission) => {
-        try {
-          await axios.post(`http://localhost:4000/api/forms/${identifier}/submit`, submission.data);
-          setSubmitted(true);
-        } catch {
-          setError('Submission failed. Please try again.');
-        }
-      });
-    });
-
-    return () => {
-      if (formInstanceRef.current) {
-        formInstanceRef.current.destroy();
-        formInstanceRef.current = null;
-      }
-    };
-  }, [formData]);
+  async function handleSubmit(submission) {
+    try {
+      await axios.post(`http://localhost:4000/api/forms/${identifier}/submit`, submission.data);
+      setSubmitted(true);
+    } catch {
+      setError('Submission failed. Please try again.');
+    }
+  }
 
   if (error) {
     return <div style={styles.center}><p style={styles.error}>{error}</p></div>;
@@ -117,7 +102,7 @@ export default function PublicForm() {
           </div>
         )}
         <h1 style={styles.title}>{formData.title}</h1>
-        <div ref={formRef} />
+        <Form form={formData.schema} onSubmit={handleSubmit} />
       </div>
     </div>
   );
