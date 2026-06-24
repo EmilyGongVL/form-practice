@@ -1,24 +1,33 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import api from '../api';
+
+const schema = z.object({
+  email: z.string().email('Enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
 
 export default function Login() {
   const [mode, setMode] = useState('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [serverError, setServerError] = useState('');
   const navigate = useNavigate();
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError('');
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+    resolver: zodResolver(schema),
+  });
+
+  async function onSubmit({ email, password }) {
+    setServerError('');
     try {
       const endpoint = mode === 'login' ? '/auth/login' : '/auth/register';
       const { data } = await api.post(endpoint, { email, password });
       localStorage.setItem('token', data.token);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.error || 'Something went wrong');
+      setServerError(err.response?.data?.error || 'Something went wrong');
     }
   }
 
@@ -30,11 +39,19 @@ export default function Login() {
           <button style={mode === 'login' ? styles.activeTab : styles.tab} onClick={() => setMode('login')}>Login</button>
           <button style={mode === 'register' ? styles.activeTab : styles.tab} onClick={() => setMode('register')}>Register</button>
         </div>
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <input style={styles.input} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
-          <input style={styles.input} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
-          {error && <p style={styles.error}>{error}</p>}
-          <button style={styles.button} type="submit">{mode === 'login' ? 'Login' : 'Register'}</button>
+        <form onSubmit={handleSubmit(onSubmit)} style={styles.form}>
+          <div>
+            <input style={styles.input} type="email" placeholder="Email" {...register('email')} />
+            {errors.email && <p style={styles.fieldError}>{errors.email.message}</p>}
+          </div>
+          <div>
+            <input style={styles.input} type="password" placeholder="Password" {...register('password')} />
+            {errors.password && <p style={styles.fieldError}>{errors.password.message}</p>}
+          </div>
+          {serverError && <p style={styles.error}>{serverError}</p>}
+          <button style={styles.button} type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Please wait...' : mode === 'login' ? 'Login' : 'Register'}
+          </button>
         </form>
       </div>
     </div>
@@ -49,7 +66,8 @@ const styles = {
   tab: { flex: 1, padding: '0.5rem', background: 'none', border: 'none', cursor: 'pointer', color: '#999', fontSize: '1rem' },
   activeTab: { flex: 1, padding: '0.5rem', background: 'none', border: 'none', borderBottom: '2px solid #4f46e5', cursor: 'pointer', color: '#4f46e5', fontWeight: 600, fontSize: '1rem', marginBottom: '-2px' },
   form: { display: 'flex', flexDirection: 'column', gap: '0.75rem' },
-  input: { padding: '0.6rem 0.8rem', border: '1px solid #ddd', borderRadius: '4px', fontSize: '1rem' },
+  input: { padding: '0.6rem 0.8rem', border: '1px solid #ddd', borderRadius: '4px', fontSize: '1rem', width: '100%', boxSizing: 'border-box' },
   button: { padding: '0.75rem', background: '#4f46e5', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '1rem' },
   error: { color: '#dc2626', fontSize: '0.875rem', margin: 0 },
+  fieldError: { color: '#dc2626', fontSize: '0.8rem', margin: '0.25rem 0 0 0' },
 };

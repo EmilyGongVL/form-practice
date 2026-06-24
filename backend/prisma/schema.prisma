@@ -32,6 +32,14 @@ model Form {
   bannerImagePath String?
   logoAlign       String?  @default("left")
   btnColor        String?
+  formStatus      String?  @default("live")
+  venueName       String?
+  sourceGroup     String?
+  sourceName      String?
+  assignLeadsTo   String?
+  redirectLink    String?
+  submissionCopyTo String?
+  successMessage  String?
   userId     Int
   user       User     @relation(fields: [userId], references: [id])
   leads      Lead[]

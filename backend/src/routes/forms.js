@@ -54,6 +54,8 @@ router.get('/:identifier', async (req, res) => {
       title: true, schema: true, logoPath: true, bgColor: true, bgImagePath: true,
       borderColor: true, borderWidth: true, borderStyle: true, borderRadius: true, cardShadow: true,
       bannerImagePath: true, logoAlign: true, btnColor: true, formType: true,
+      formStatus: true, venueName: true, sourceGroup: true, sourceName: true,
+      assignLeadsTo: true, redirectLink: true, submissionCopyTo: true, successMessage: true,
     },
   });
   if (!form) return res.status(404).json({ error: 'Form not found' });
@@ -72,6 +74,15 @@ router.get('/:identifier', async (req, res) => {
     bannerImageUrl: toUrl(req, form.bannerImagePath),
     logoAlign: form.logoAlign || 'left',
     btnColor: form.btnColor || null,
+    formType: form.formType || 'Standard Form',
+    formStatus: form.formStatus || 'live',
+    venueName: form.venueName || '',
+    sourceGroup: form.sourceGroup || '',
+    sourceName: form.sourceName || '',
+    assignLeadsTo: form.assignLeadsTo || '',
+    redirectLink: form.redirectLink || '',
+    submissionCopyTo: form.submissionCopyTo || '',
+    successMessage: form.successMessage || '',
   });
 });
 
@@ -111,7 +122,7 @@ router.post('/', requireAuth, uploadFields, async (req, res) => {
       identifier: `temp-${Date.now()}`,
       title,
       schema: parsedSchema,
-      formType: formType || 'Lead Form',
+      formType: formType || 'Standard Form',
       logoPath: logoFile ? logoFile.path : null,
       bgColor: bgColor || null,
       bgImagePath: bgImageFile ? bgImageFile.path : null,
@@ -123,6 +134,14 @@ router.post('/', requireAuth, uploadFields, async (req, res) => {
       borderStyle: borderStyle || 'solid',
       borderRadius: borderRadius ? parseInt(borderRadius) : 8,
       cardShadow: cardShadow || 'md',
+      formStatus: req.body.formStatus || 'live',
+      venueName: req.body.venueName || null,
+      sourceGroup: req.body.sourceGroup || null,
+      sourceName: req.body.sourceName || null,
+      assignLeadsTo: req.body.assignLeadsTo || null,
+      redirectLink: req.body.redirectLink || null,
+      submissionCopyTo: req.body.submissionCopyTo || null,
+      successMessage: req.body.successMessage || null,
       userId: req.user.id,
     },
   });
@@ -188,8 +207,16 @@ router.patch('/:identifier', requireAuth, uploadFields, async (req, res) => {
   if (bannerFile) data.bannerImagePath = bannerFile.path;
   if (req.body.removeBanner === 'true') data.bannerImagePath = null;
   if (req.body.removeLogo === 'true') data.logoPath = null;
-  if ('logoAlign' in req.body) data.logoAlign = req.body.logoAlign || 'left';
-  if ('btnColor'  in req.body) data.btnColor  = req.body.btnColor  || null;
+  if ('logoAlign'        in req.body) data.logoAlign        = req.body.logoAlign        || 'left';
+  if ('btnColor'         in req.body) data.btnColor         = req.body.btnColor         || null;
+  if ('formStatus'       in req.body) data.formStatus       = req.body.formStatus       || 'live';
+  if ('venueName'        in req.body) data.venueName        = req.body.venueName        || null;
+  if ('sourceGroup'      in req.body) data.sourceGroup      = req.body.sourceGroup      || null;
+  if ('sourceName'       in req.body) data.sourceName       = req.body.sourceName       || null;
+  if ('assignLeadsTo'    in req.body) data.assignLeadsTo    = req.body.assignLeadsTo    || null;
+  if ('redirectLink'     in req.body) data.redirectLink     = req.body.redirectLink     || null;
+  if ('submissionCopyTo' in req.body) data.submissionCopyTo = req.body.submissionCopyTo || null;
+  if ('successMessage'   in req.body) data.successMessage   = req.body.successMessage   || null;
 
   const updated = await prisma.form.update({ where: { id: form.id }, data });
   res.json(updated);

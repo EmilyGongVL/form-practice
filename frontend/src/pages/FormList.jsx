@@ -73,9 +73,17 @@ export default function FormList() {
   const navigate = useNavigate();
 
   async function loadForms() {
-    const { data } = await api.get('/forms');
-    setForms(data);
-    setLoading(false);
+    try {
+      const { data } = await api.get('/forms');
+      setForms(data);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        navigate('/login');
+      }
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => { loadForms(); }, []);
